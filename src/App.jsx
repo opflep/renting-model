@@ -46,8 +46,9 @@ const KPICard = ({ title, value, subtext, description, borderColor = "border-sla
 
   return (
     <Card 
-      // Removed bg-amber-50 to keep consistent white background
-      className={`p-4 border-l-4 ${borderColor} relative overflow-visible transition-all duration-200 ${isHighlighted ? 'ring-1 ring-amber-200' : ''} ${clickable ? 'cursor-pointer hover:shadow-md hover:bg-slate-50' : ''}`}
+      // Applied shadow-none for flat design
+      // Removed hover:shadow-md from clickable state to maintain flat look
+      className={`p-4 border-l-4 ${borderColor} shadow-none relative overflow-visible transition-all duration-200 ${isHighlighted ? 'ring-1 ring-amber-200' : ''} ${clickable ? 'cursor-pointer hover:bg-slate-50' : ''}`}
       onClick={onClick ? (e) => {
           // Prevent clicking info icon from triggering card click
           if (e.target.closest('.info-trigger')) return;
@@ -298,7 +299,7 @@ export default function RealEstateCalculator() {
               <InputField label="Vacancy Rate" value={vacancyRate} onChange={setVacancyRate} unit="%" />
 
               <SectionTitle icon={Calculator} title="Expenses" />
-              <InputField label="Property Tax (Yr)" value={annualPropertyTax} onChange={setAnnualPropertyTax} unit="$" />
+              <InputField label="Property Tax (Yr)" value={annualPropertyTax} onChange={setAnnualPropertyTax} unit="$" step="100" />
               <InputField label="Insurance (Yr)" value={annualInsurance} onChange={setAnnualInsurance} unit="$" />
               <InputField label="Strata/Maint (Mo)" value={monthlyStrata} onChange={setMonthlyStrata} unit="$" step="10" />
               <InputField label="Other Expenses (Mo)" value={monthlyOther} onChange={setMonthlyOther} unit="$" step="10" tooltip="Management fees, repairs, etc." />
