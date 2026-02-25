@@ -65,7 +65,7 @@ const KPICard = ({ title, value, subtext, description, borderColor = "border-sla
             }}
             className="focus:outline-none"
           >
-            <Info className={`w-4 h-4 transition-colors ${showInfo ? 'text-emerald-500' : 'text-slate-300 hover:text-slate-500'}`} />
+            <Info className={`w-4 h-4 transition-colors ${showInfo ? 'text-emerald-500' : 'text-slate-300 hover:text-slate-50'}`} />
           </button>
           
           {showInfo && (
@@ -92,7 +92,6 @@ const KPICard = ({ title, value, subtext, description, borderColor = "border-sla
   );
 };
 
-// --- TRANSLATIONS & TEXTS ---
 const DICT = {
   NA: {
     title: "Real Estate Investment Model",
@@ -124,31 +123,32 @@ const DICT = {
     formula: "Formula",
     kpiPreTax: "Pre-Tax Cashflow (Mo)",
     kpiPreTaxSub: "Actual Liquidity",
-    kpiPreTaxDesc: "Rent - (Op Expenses + Mortgage Payment). This is the cash entering/leaving your pocket before you file your tax return.",
+    kpiPreTaxDesc: "Rent - (Op Expenses + Mortgage Payment).",
     kpiPostTax: "Post-Tax Cashflow (Mo)",
     kpiPostTaxSub: "After Estimated Tax",
-    kpiPostTaxDesc: "Pre-Tax Cashflow - Estimated Income Tax. Be careful: Mortgage Principal is NOT tax deductible, so you pay tax on money you used to pay down debt.",
+    kpiPostTaxDesc: "Pre-Tax Cashflow - Estimated Income Tax.",
     kpiCoC: "Cash on Cash",
     kpiCoCSub: "Return on",
     kpiCoCDesc: "Annual Post-Tax Cashflow / Initial Cash Invested.",
     kpiCapRate: "Cap Rate (Y1)",
     kpiCapRateSub: "NOI / Price",
-    kpiCapRateDesc: "Net Operating Income / Purchase Price. Measures pure property performance.",
+    kpiCapRateDesc: "Net Operating Income / Purchase Price.",
     kpiMortgage: "Mortgage Payment",
+    kpiMortgageSub: "Int: {int} | Prin: {prin}",
     kpiMortgageDesc: "Interest (Cost) + Principal (Equity).",
     seeTax: "See Tax Impact",
     viewing: "Viewing Projection:",
     showLess: "Show Less (10 Years)",
-    showAll: "Show All",
+    showAll: "Show All ({term} Years)",
     chart1Title: "Cashflow Analysis",
-    chart1Sub: "Principal is Equity (Savings), Interest & Expenses are Costs.",
+    chart1Sub: "Principal is Equity, Interest & Expenses are Costs.",
     chart1Rent: "Rent Income",
     chart1Exp: "Op. Expenses",
     chart1Int: "Interest",
     chart1Prin: "Principal (Equity)",
     chart1Net: "Net Cashflow",
     chart2Title: "Where does the money go? (Year 1)",
-    chart2Sub: "Breakdown of all outflows (Expenses + Interest).",
+    chart2Sub: "Breakdown of all outflows.",
     chart3Title: "Equity & Loan",
     chart3Prop: "Property Value",
     chart3Loan: "Loan Balance",
@@ -157,7 +157,7 @@ const DICT = {
     chart4Sub: "Gain = Cashflow + Principal Paydown + Appreciation",
     chart4Gain: "Appreciation",
     taxNoteTitle: "How Tax Rate Affects Total Gain:",
-    taxNoteDesc: "High taxes reduce your Cashflow (Blue bar), which is part of your Total Gain. However, Principal Paydown and Appreciation are usually tax-deferred.",
+    taxNoteDesc: "High taxes reduce your Cashflow (Blue bar), which is part of your Total Gain.",
     tableTitle: "Yearly Breakdown",
     tableYear: "Year",
     tableRent: "Rent",
@@ -178,20 +178,20 @@ const DICT = {
     subtitle: "Trực quan hóa dòng tiền, nghĩa vụ nợ, và lợi nhuận dài hạn (Chuẩn Việt Nam).",
     inputs: "Thông Số Nhập Liệu",
     property: "Bất Động Sản (Nhập Xanh)",
-    price: "Giá Mua BĐS",
+    price: "Giá Mua BĐS (tỷ)",
     downPayment: "Tỉ Lệ Vốn Tự Có",
     committedCash: "Vốn Đầu Tư",
     mortgage: "Khoản Vay",
     rate: "Lãi Suất Vay",
     term: "Thời Hạn Vay",
     income: "Doanh Thu Cho Thuê",
-    rent: "Giá Thuê / Tháng",
+    rent: "Giá Thuê / Tháng (triệu)",
     vacancy: "Tỉ Lệ Trống",
-    expenses: "Chi Phí Vận Hành",
-    tax: "Thuế Đất (Năm)",
-    insurance: "Bảo hiểm (Năm)",
-    strata: "Phí Quản Lý (Tháng)",
-    other: "Chi Phí Khác (Tháng)",
+    expenses: "Chi Phí Vận Hành (triệu)",
+    tax: "Thuế Đất / Năm",
+    insurance: "Bảo hiểm / Năm",
+    strata: "Phí Quản Lý / Tháng",
+    other: "Chi Phí Khác / Tháng",
     otherTooltip: "Phí môi giới, bảo trì, v.v.",
     projections: "Dự Phóng Tương Lai",
     growth: "BĐS Tăng Giá",
@@ -203,31 +203,32 @@ const DICT = {
     formula: "Cách tính",
     kpiPreTax: "Dòng Tiền / Tháng (TT)",
     kpiPreTaxSub: "Trạng Thái Thực Tế",
-    kpiPreTaxDesc: "Giá Thuê - (Chi phí quản lý + Tiền trả ngân hàng). Đây là dòng tiền thực ra/vào túi bạn hàng tháng trước khi nộp thuế.",
+    kpiPreTaxDesc: "Giá Thuê - (Chi phí quản lý + Tiền trả ngân hàng).",
     kpiPostTax: "Dòng Tiền Sau Thuế",
     kpiPostTaxSub: "Đã trừ Thuế Cho Thuê",
-    kpiPostTaxDesc: "Dòng Tiền Trước Thuế - Tiền Thuế. *Lưu ý: Luật VN đánh thuế 10% trực tiếp trên DOANH THU, không cho khấu trừ lãi vay ngân hàng.",
+    kpiPostTaxDesc: "Dòng Tiền Trước Thuế - Tiền Thuế.",
     kpiCoC: "Tỉ Suất Tiền Mặt",
     kpiCoCSub: "Lãi trên",
-    kpiCoCDesc: "Dòng tiền Sau Thuế hàng năm / Vốn Đầu Tư Ban Đầu (Cash-on-cash return). Đo lường hiệu quả sinh lời của số tiền thực bỏ ra.",
+    kpiCoCDesc: "Dòng tiền Sau Thuế hàng năm / Vốn Đầu Tư Ban Đầu.",
     kpiCapRate: "Tỉ Suất Sinh Lời (Cap)",
     kpiCapRateSub: "NOI / Giá Mua",
-    kpiCapRateDesc: "Lợi Nhuận Vận Hành Thuần (Tiền Thuê - Phí Quản Lý) chia cho Giá Mua. Bỏ qua yếu tố vay mượn đòn bẩy.",
+    kpiCapRateDesc: "Lợi Nhuận Vận Hành Thuần chia cho Giá Mua.",
     kpiMortgage: "Trả Ngân Hàng (Tháng)",
-    kpiMortgageDesc: "Tổng tiền trả NH. GỐC là tiền tiết kiệm của bạn (vốn chủ), LÃI là chi phí mất đi.",
+    kpiMortgageSub: "Lãi: {int} | Gốc: {prin}",
+    kpiMortgageDesc: "Tổng tiền trả NH. GỐC là tích luỹ, LÃI là chi phí.",
     seeTax: "Xem Thuế",
     viewing: "Đang xem dữ liệu:",
     showLess: "Thu Gọn (10 Năm)",
-    showAll: "Xem Toàn Bộ",
-    chart1Title: "Phân Tích Dòng Tiền (Cashflow)",
-    chart1Sub: "Tiền Trả Gốc là tích luỹ (Vốn Chủ), Lãi & Phí QL là Chi phí.",
+    showAll: "Xem Toàn Bộ ({term} Năm)",
+    chart1Title: "Phân Tích Dòng Tiền",
+    chart1Sub: "Trả Gốc là tích luỹ, Lãi & Phí QL là Chi phí.",
     chart1Rent: "Thu Tiền Thuê",
     chart1Exp: "Phí QL + Thuế",
     chart1Int: "Trả Lãi NH",
     chart1Prin: "Trả Gốc NH (Tích luỹ)",
     chart1Net: "Dòng Tiền Thực Tế",
     chart2Title: "Chi Phí Thất Thoát (Năm 1)",
-    chart2Sub: "Phân bổ dòng tiền chi ra (bao gồm Thuế, Phí, Lãi NH).",
+    chart2Sub: "Phân bổ dòng tiền chi ra hàng tháng.",
     chart3Title: "Tích Luỹ Vốn Chủ & Dư Nợ",
     chart3Prop: "Giá Trị BĐS",
     chart3Loan: "Dư Nợ NH",
@@ -236,7 +237,7 @@ const DICT = {
     chart4Sub: "Tổng Lời = Tiền Mặt + Trả Gốc NH + Tăng Giá BĐS",
     chart4Gain: "BĐS Tăng Giá",
     taxNoteTitle: "Ảo Tưởng Dòng Tiền (Phantom Cashflow):",
-    taxNoteDesc: "Thuế TNCN tại VN tính trên tổng doanh thu. Ngay cả khi thu không đủ bù chi trả ngân hàng, bạn vẫn có thể phải nộp tiền thuế, khiến dòng tiền thực tế sụt giảm.",
+    taxNoteDesc: "Thuế TNCN tại VN tính trên tổng doanh thu. Bạn có thể phải nộp thuế ngay cả khi dòng tiền đang âm.",
     tableTitle: "Bảng Phân Tích Chi Tiết",
     tableYear: "Năm",
     tableRent: "Giá Thuê",
@@ -255,11 +256,10 @@ const DICT = {
 };
 
 export default function RealEstateCalculator() {
-  // --- Market State ---
-  const [market, setMarket] = useState('NA'); // 'NA' or 'VN'
+  const [market, setMarket] = useState('NA'); 
   const t = DICT[market];
 
-  // --- Input State ---
+  // Base raw values (stored in standard units: $1 or 1 VND)
   const [propertyPrice, setPropertyPrice] = useState(530000); 
   const [downPaymentPercent, setDownPaymentPercent] = useState(25); 
   const [mortgageRate, setMortgageRate] = useState(4.5); 
@@ -277,19 +277,17 @@ export default function RealEstateCalculator() {
   const [expenseInflation, setExpenseInflation] = useState(2.0); 
   const [incomeTaxRate, setIncomeTaxRate] = useState(54); 
   
-  // View State
   const [showFullSchedule, setShowFullSchedule] = useState(false);
   const [showPostTax, setShowPostTax] = useState(false);
 
-  // --- Reset Defaults on Market Change ---
   useEffect(() => {
     if (market === 'VN') {
-        setPropertyPrice(3500000000);
+        setPropertyPrice(3500000000); // 3.5 tỷ
         setDownPaymentPercent(30);
         setMortgageRate(9.0);
         setMortgageTerm(25);
-        setMonthlyRent(15000000);
-        setMonthlyStrata(1500000);
+        setMonthlyRent(15000000); // 15 triệu
+        setMonthlyStrata(1500000); // 1.5 triệu
         setAnnualPropertyTax(0);
         setAnnualInsurance(0);
         setMonthlyOther(0);
@@ -313,7 +311,6 @@ export default function RealEstateCalculator() {
     setShowPostTax(false);
   }, [market]);
 
-  // --- Formatters ---
   const isVN = market === 'VN';
   const locale = isVN ? 'vi-VN' : 'en-US';
   const currencyStr = isVN ? 'VND' : 'USD';
@@ -321,12 +318,12 @@ export default function RealEstateCalculator() {
   const fmt = (val) => new Intl.NumberFormat(locale, { style: 'currency', currency: currencyStr, maximumFractionDigits: 0 }).format(val);
   const fmtPct = (val) => new Intl.NumberFormat(locale, { style: 'percent', minimumFractionDigits: 2 }).format(val / 100);
   
-  // Chart short formatter (K/M vs Tr/Tỷ)
+  // Smart Short Formatter for VN: Swaps between triệu and tỷ
   const fmtShort = (val) => {
       const absVal = Math.abs(val);
       if (isVN) {
-        if (absVal >= 1e9) return (val / 1e9).toFixed(2).replace(/\.00$/, '') + ' tỷ';
-        if (absVal >= 1e6) return (val / 1e6).toFixed(0) + ' tr';
+        if (absVal >= 1e9) return (val / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' tỷ';
+        return (val / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + ' triệu';
       } else {
         if (absVal >= 1e6) return (val / 1e6).toFixed(2).replace(/\.00$/, '') + 'm';
         if (absVal >= 1e3) return (val / 1e3).toFixed(0) + 'k';
@@ -334,7 +331,6 @@ export default function RealEstateCalculator() {
       return fmt(val);
   };
 
-  // --- Calculations ---
   const results = useMemo(() => {
     const loanAmount = propertyPrice * (1 - downPaymentPercent / 100);
     const monthlyRate = mortgageRate / 100 / 12;
@@ -354,8 +350,6 @@ export default function RealEstateCalculator() {
     let currentMonthlyStrata = monthlyStrata;
     let currentMonthlyOther = monthlyOther;
 
-    let cumulativeCashflow = 0;
-
     for (let year = 1; year <= mortgageTerm; year++) {
       let annualInterest = 0;
       let annualPrincipal = 0;
@@ -364,45 +358,32 @@ export default function RealEstateCalculator() {
         if (currentLoanBalance <= 0) break;
         const interestPayment = currentLoanBalance * monthlyRate;
         const principalPayment = monthlyMortgage - interestPayment;
-        
         annualInterest += interestPayment;
         annualPrincipal += principalPayment;
         currentLoanBalance -= principalPayment;
       }
       if (currentLoanBalance < 0) currentLoanBalance = 0;
 
-      // Annual Totals
       const grossRent = currentMonthlyRent * 12 * (1 - vacancyRate/100);
       const operatingExpenses = (currentMonthlyStrata * 12) + currentAnnualTax + currentAnnualIns + (currentMonthlyOther * 12);
       const mortgagePaymentAnnual = annualInterest + annualPrincipal;
       const totalExpenses = operatingExpenses + mortgagePaymentAnnual;
-      
       const cashflowPreTax = grossRent - totalExpenses;
       
-      // TAX LOGIC
       let estimatedTax = 0;
       if (isVN) {
-          // VN: 10% tax on gross revenue if over 100M VND/year. No deductions.
           estimatedTax = grossRent > 100000000 ? grossRent * (incomeTaxRate / 100) : 0;
       } else {
-          // NA: Marginal tax on Net Income (Rent - OpExpenses - Interest)
           const taxableIncome = grossRent - operatingExpenses - annualInterest;
           estimatedTax = taxableIncome > 0 ? taxableIncome * (incomeTaxRate / 100) : 0;
       }
 
       const cashflowPostTax = cashflowPreTax - estimatedTax;
-      cumulativeCashflow += cashflowPostTax;
-
-      // Appreciation
       const startValue = currentPropertyValue;
       currentPropertyValue = currentPropertyValue * (1 + annualAppreciation / 100);
-      const annualAppreciationAmount = currentPropertyValue - startValue;
-
-      // Equity
+      const appreciationAmount = currentPropertyValue - startValue;
       const equity = currentPropertyValue - currentLoanBalance;
-      
-      // Total Return
-      const totalGain = cashflowPostTax + annualPrincipal + annualAppreciationAmount;
+      const totalGain = cashflowPostTax + annualPrincipal + appreciationAmount;
 
       data.push({
         year,
@@ -418,17 +399,16 @@ export default function RealEstateCalculator() {
         cashflow: Math.round(cashflowPostTax),
         cashflowPreTax: Math.round(cashflowPreTax),
         totalGain: Math.round(totalGain),
-        appreciation: Math.round(annualAppreciationAmount),
+        appreciation: Math.round(appreciationAmount),
         breakdown: {
             strata: currentMonthlyStrata * 12,
-            tax: currentAnnualTax + (isVN ? estimatedTax : 0), // Include rental tax in chart for VN
+            tax: currentAnnualTax + (isVN ? estimatedTax : 0),
             insurance: currentAnnualIns,
             other: currentMonthlyOther * 12,
             interest: annualInterest
         }
       });
 
-      // Inflation
       currentMonthlyRent *= (1 + annualRentIncrease / 100);
       currentAnnualTax *= (1 + expenseInflation / 100);
       currentAnnualIns *= (1 + expenseInflation / 100);
@@ -442,24 +422,17 @@ export default function RealEstateCalculator() {
       initialCashInvested: (propertyPrice * (downPaymentPercent / 100)),
       schedule: data
     };
-  }, [
-    propertyPrice, downPaymentPercent, mortgageRate, mortgageTerm,
-    monthlyRent, monthlyStrata, annualPropertyTax, annualInsurance, monthlyOther, vacancyRate,
-    annualAppreciation, annualRentIncrease, expenseInflation, incomeTaxRate, isVN
-  ]);
+  }, [propertyPrice, downPaymentPercent, mortgageRate, mortgageTerm, monthlyRent, monthlyStrata, annualPropertyTax, annualInsurance, monthlyOther, vacancyRate, annualAppreciation, annualRentIncrease, expenseInflation, incomeTaxRate, isVN]);
 
   const stats = results.schedule[0] || {};
-  
   const visibleSchedule = useMemo(() => {
     return showFullSchedule ? results.schedule : results.schedule.slice(0, 10);
   }, [results.schedule, showFullSchedule]);
 
-  // KPIs
   const cashOnCash = results.initialCashInvested > 0 ? (stats.cashflow / results.initialCashInvested) * 100 : 0;
   const noi = stats.grossRent - stats.operatingExpenses;
   const capRate = propertyPrice > 0 ? (noi / propertyPrice) * 100 : 0;
 
-  // Data for Expense Pie Chart (Year 1)
   const expenseData = stats.breakdown ? [
     { name: t.pieInt, value: stats.breakdown.interest, color: '#f97316' }, 
     { name: t.pieStrata, value: stats.breakdown.strata, color: '#ef4444' }, 
@@ -471,255 +444,110 @@ export default function RealEstateCalculator() {
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-800">
       <div className="max-w-7xl mx-auto">
-        
-        {/* Header & Market Switcher */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <header>
                 <h1 className="text-3xl font-bold text-slate-900 mb-2">{t.title}</h1>
                 <p className="text-slate-600">{t.subtitle}</p>
             </header>
-            
             <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-                <button 
-                    onClick={() => setMarket('NA')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors ${market === 'NA' ? 'bg-emerald-100 text-emerald-800' : 'text-slate-500 hover:bg-slate-50'}`}
-                >
-                    <MapPin className="w-4 h-4" /> North America
-                </button>
-                <button 
-                    onClick={() => setMarket('VN')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors ${market === 'VN' ? 'bg-emerald-100 text-emerald-800' : 'text-slate-500 hover:bg-slate-50'}`}
-                >
-                    <MapPin className="w-4 h-4" /> Việt Nam
-                </button>
+                <button onClick={() => setMarket('NA')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors ${market === 'NA' ? 'bg-emerald-100 text-emerald-800' : 'text-slate-500 hover:bg-slate-50'}`}><MapPin className="w-4 h-4" /> North America</button>
+                <button onClick={() => setMarket('VN')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors ${market === 'VN' ? 'bg-emerald-100 text-emerald-800' : 'text-slate-500 hover:bg-slate-50'}`}><MapPin className="w-4 h-4" /> Việt Nam</button>
             </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* LEFT COLUMN: INPUTS */}
           <div className="lg:col-span-3 space-y-6">
             <Card className="p-5 bg-white sticky top-6">
               <h2 className="text-lg font-bold mb-4 text-slate-900">{t.inputs}</h2>
-              
               <SectionTitle icon={Home} title={t.property} />
-              <InputField label={t.price} value={propertyPrice} onChange={setPropertyPrice} unit={isVN ? "₫" : "$"} step={isVN ? "100000000" : "10000"} highlight />
-              <InputField 
-                label={t.downPayment} 
-                value={downPaymentPercent} 
-                onChange={setDownPaymentPercent} 
-                unit="%" 
-                highlight
-                subLabel={`${t.committedCash}: ${fmtShort(results.initialCashInvested)}`} 
-              />
+              <InputField label={t.price} value={isVN ? propertyPrice / 1e9 : propertyPrice} onChange={(v) => setPropertyPrice(isVN ? v * 1e9 : v)} unit={isVN ? "tỷ" : "$"} step={isVN ? "0.05" : "10000"} highlight />
+              <InputField label={t.downPayment} value={downPaymentPercent} onChange={setDownPaymentPercent} unit="%" highlight subLabel={`${t.committedCash}: ${fmtShort(results.initialCashInvested)}`} />
               
               <SectionTitle icon={Percent} title={t.mortgage} />
               <InputField label={t.rate} value={mortgageRate} onChange={setMortgageRate} unit="%" step="0.1" highlight />
               <InputField label={t.term} value={mortgageTerm} onChange={setMortgageTerm} unit={isVN ? "Năm" : "Years"} />
-
+              
               <SectionTitle icon={DollarSign} title={t.income} />
-              <InputField label={t.rent} value={monthlyRent} onChange={setMonthlyRent} unit={isVN ? "₫" : "$"} step={isVN ? "500000" : "100"} highlight />
+              <InputField label={t.rent} value={isVN ? monthlyRent / 1e6 : monthlyRent} onChange={(v) => setMonthlyRent(isVN ? v * 1e6 : v)} unit={isVN ? "triệu" : "$"} step={isVN ? "0.5" : "100"} highlight />
               <InputField label={t.vacancy} value={vacancyRate} onChange={setVacancyRate} unit="%" />
-
+              
               <SectionTitle icon={Calculator} title={t.expenses} />
-              <InputField label={t.tax} value={annualPropertyTax} onChange={setAnnualPropertyTax} unit={isVN ? "₫" : "$"} step={isVN ? "100000" : "100"} />
-              <InputField label={t.insurance} value={annualInsurance} onChange={setAnnualInsurance} unit={isVN ? "₫" : "$"} step={isVN ? "100000" : "100"} />
-              <InputField label={t.strata} value={monthlyStrata} onChange={setMonthlyStrata} unit={isVN ? "₫" : "$"} step={isVN ? "100000" : "10"} />
-              <InputField label={t.other} value={monthlyOther} onChange={setMonthlyOther} unit={isVN ? "₫" : "$"} step={isVN ? "100000" : "10"} tooltip={t.otherTooltip} />
+              <InputField label={t.tax} value={isVN ? annualPropertyTax / 1e6 : annualPropertyTax} onChange={(v) => setAnnualPropertyTax(isVN ? v * 1e6 : v)} unit={isVN ? "triệu" : "$"} step={isVN ? "1" : "100"} />
+              <InputField label={t.insurance} value={isVN ? annualInsurance / 1e6 : annualInsurance} onChange={(v) => setAnnualInsurance(isVN ? v * 1e6 : v)} unit={isVN ? "triệu" : "$"} step={isVN ? "1" : "100"} />
+              <InputField label={t.strata} value={isVN ? monthlyStrata / 1e6 : monthlyStrata} onChange={(v) => setMonthlyStrata(isVN ? v * 1e6 : v)} unit={isVN ? "triệu" : "$"} step={isVN ? "0.1" : "10"} />
+              <InputField label={t.other} value={isVN ? monthlyOther / 1e6 : monthlyOther} onChange={(v) => setMonthlyOther(isVN ? v * 1e6 : v)} unit={isVN ? "triệu" : "$"} step={isVN ? "0.1" : "10"} tooltip={t.otherTooltip} />
 
               <SectionTitle icon={TrendingUp} title={t.projections} />
               <InputField label={t.growth} value={annualAppreciation} onChange={setAnnualAppreciation} unit="%" step="0.1" />
               <InputField label={t.rentInc} value={annualRentIncrease} onChange={setAnnualRentIncrease} unit="%" step="0.1" />
-              <InputField 
-                label={t.expInf} 
-                value={expenseInflation} 
-                onChange={setExpenseInflation} 
-                unit="%" 
-                step="0.1" 
-                tooltip={t.expInfTooltip}
-              />
-              <InputField 
-                label={t.incomeTax} 
-                value={incomeTaxRate} 
-                onChange={setIncomeTaxRate} 
-                unit="%" 
-                tooltip={t.incomeTaxTooltip}
-              />
+              <InputField label={t.expInf} value={expenseInflation} onChange={setExpenseInflation} unit="%" step="0.1" tooltip={t.expInfTooltip} />
+              <InputField label={t.incomeTax} value={incomeTaxRate} onChange={setIncomeTaxRate} unit="%" tooltip={t.incomeTaxTooltip} />
             </Card>
           </div>
 
-          {/* RIGHT COLUMN: DASHBOARD */}
           <div className="lg:col-span-9 space-y-6">
-            
-            {/* KPI Cards */}
             <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${showPostTax ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-4 transition-all duration-300 ease-in-out`}>
-              
-              <KPICard
-                title={t.kpiPreTax}
-                value={stats.cashflowPreTax ? fmtShort(stats.cashflowPreTax / 12) : (isVN ? '0 ₫' : '$0')}
-                subtext={t.kpiPreTaxSub}
-                borderColor="border-slate-400"
-                valueColor={stats.cashflowPreTax >= 0 ? 'text-slate-700' : 'text-rose-600'}
-                description={t.kpiPreTaxDesc}
-                clickable={true}
-                onClick={() => setShowPostTax(!showPostTax)}
-                isOpen={showPostTax}
-                t={t}
-              />
-
-              {showPostTax && (
-                <div className="animate-in fade-in zoom-in-95 duration-200">
-                    <KPICard
-                        title={t.kpiPostTax}
-                        value={stats.cashflow ? fmtShort(stats.cashflow / 12) : (isVN ? '0 ₫' : '$0')}
-                        subtext={t.kpiPostTaxSub}
-                        borderColor="border-emerald-500"
-                        valueColor={stats.cashflow >= 0 ? 'text-emerald-600' : 'text-rose-600'}
-                        description={t.kpiPostTaxDesc}
-                        t={t}
-                    />
-                </div>
-              )}
-              
-              <KPICard
-                title={t.kpiCoC}
-                value={fmtPct(cashOnCash)}
-                subtext={`${t.kpiCoCSub} ${fmtShort(results.initialCashInvested)}`}
-                borderColor="border-blue-500"
-                description={t.kpiCoCDesc}
-                t={t}
-              />
-              
-              <KPICard
-                title={t.kpiCapRate}
-                value={fmtPct(capRate)}
-                subtext={t.kpiCapRateSub}
-                borderColor="border-purple-500"
-                description={t.kpiCapRateDesc}
-                t={t}
-              />
-              
-              <KPICard
-                title={t.kpiMortgage}
-                value={fmtShort(results.monthlyMortgage)}
-                subtext={t.kpiMortgageSub.replace('{int}', fmtShort(stats.interest/12)).replace('{prin}', fmtShort(stats.principal/12))}
-                borderColor="border-amber-500"
-                isHighlighted={true}
-                description={t.kpiMortgageDesc}
-                t={t}
-              />
-              
+              <KPICard title={t.kpiPreTax} value={stats.cashflowPreTax ? fmtShort(stats.cashflowPreTax / 12) : (isVN ? '0' : '$0')} subtext={t.kpiPreTaxSub} borderColor="border-slate-400" valueColor={stats.cashflowPreTax >= 0 ? 'text-slate-700' : 'text-rose-600'} description={t.kpiPreTaxDesc} clickable={true} onClick={() => setShowPostTax(!showPostTax)} isOpen={showPostTax} t={t} />
+              {showPostTax && <div className="animate-in fade-in zoom-in-95 duration-200"><KPICard title={t.kpiPostTax} value={stats.cashflow ? fmtShort(stats.cashflow / 12) : (isVN ? '0' : '$0')} subtext={t.kpiPostTaxSub} borderColor="border-emerald-500" valueColor={stats.cashflow >= 0 ? 'text-emerald-600' : 'text-rose-600'} description={t.kpiPostTaxDesc} t={t} /></div>}
+              <KPICard title={t.kpiCoC} value={fmtPct(cashOnCash)} subtext={`${t.kpiCoCSub} ${fmtShort(results.initialCashInvested)}`} borderColor="border-blue-500" description={t.kpiCoCDesc} t={t} />
+              <KPICard title={t.kpiCapRate} value={fmtPct(capRate)} subtext={t.kpiCapRateSub} borderColor="border-purple-500" description={t.kpiCapRateDesc} t={t} />
+              <KPICard title={t.kpiMortgage} value={fmtShort(results.monthlyMortgage)} subtext={t.kpiMortgageSub.replace('{int}', fmtShort(stats.interest/12)).replace('{prin}', fmtShort(stats.principal/12))} borderColor="border-amber-500" isHighlighted={true} description={t.kpiMortgageDesc} t={t} />
             </div>
 
-            {/* TOGGLE BUTTON */}
             <div className="flex justify-between items-center bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
                 <span className="text-sm text-slate-500 font-medium">{t.viewing}</span>
-                <button 
-                  onClick={() => setShowFullSchedule(!showFullSchedule)}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-md transition-colors"
-                >
-                  {showFullSchedule ? (
-                    <>
-                      <span>{t.showLess}</span>
-                      <ChevronUp className="w-4 h-4" />
-                    </>
-                  ) : (
-                    <>
-                      <span>{t.showAll.replace('{term}', mortgageTerm)}</span>
-                      <ChevronDown className="w-4 h-4" />
-                    </>
-                  )}
+                <button onClick={() => setShowFullSchedule(!showFullSchedule)} className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-md transition-colors" >
+                  {showFullSchedule ? (<><span >{t.showLess}</span><ChevronUp className="w-4 h-4" /></>) : (<><span >{t.showAll.replace('{term}', mortgageTerm)}</span><ChevronDown className="w-4 h-4" /></>)}
                 </button>
             </div>
 
-            {/* CHART ROW 1 */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              
-              {/* Chart 1: Cashflow Stacked */}
               <Card className="p-6">
-                <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-800">{t.chart1Title}</h3>
-                        <p className="text-xs text-slate-500">{t.chart1Sub}</p>
-                    </div>
-                </div>
+                <div className="flex justify-between items-start mb-6"><div><h3 className="text-lg font-bold text-slate-800">{t.chart1Title}</h3><p className="text-xs text-slate-500">{t.chart1Sub}</p></div></div>
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={visibleSchedule} margin={{ top: 20, right: 10, left: isVN ? 20 : 0, bottom: 0 }}>
+                    <ComposedChart data={visibleSchedule} margin={{ top: 20, right: 10, left: 10, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                       <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                      <YAxis tickFormatter={fmtShort} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} width={45} />
-                      <Tooltip formatter={(value) => fmt(value)} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                      <YAxis tickFormatter={fmtShort} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} width={70} />
+                      <Tooltip formatter={(value) => fmtShort(value)} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                       <Legend iconType="circle" />
-                      
                       <Bar dataKey="grossRent" name={t.chart1Rent} fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
-                      
                       <Bar dataKey="operatingExpenses" name={t.chart1Exp} stackId="cost" fill="#ef4444" />
                       <Bar dataKey="interest" name={t.chart1Int} stackId="cost" fill="#f97316" />
                       <Bar dataKey="principal" name={t.chart1Prin} stackId="cost" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-
-                      <Line 
-                        type="monotone" 
-                        dataKey="cashflowPreTax" 
-                        name={t.chart1Net} 
-                        stroke="#1e293b" 
-                        strokeWidth={2} 
-                        dot={{r: 3}} 
-                      />
+                      <Line type="monotone" dataKey="cashflowPreTax" name={t.chart1Net} stroke="#1e293b" strokeWidth={2} dot={{r: 3}} />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
               </Card>
 
-              {/* Chart 2: Expense Breakdown Pie */}
               <Card className="p-6 flex flex-col">
-                <div className="mb-4">
-                    <h3 className="text-lg font-bold text-slate-800">{t.chart2Title}</h3>
-                    <p className="text-xs text-slate-500">{t.chart2Sub}</p>
-                </div>
+                <div className="mb-4"><h3 className="text-lg font-bold text-slate-800">{t.chart2Title}</h3><p className="text-xs text-slate-500">{t.chart2Sub}</p></div>
                 <div className="flex-1 flex items-center justify-center min-h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie
-                        data={expenseData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, value }) => `${name}: ${fmtShort(value)}`} 
-                      >
-                        {expenseData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
+                      <Pie data={expenseData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" label={({ name, value }) => `${name}: ${fmtShort(value)}`} >
+                        {expenseData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
                       </Pie>
-                      <Tooltip formatter={(value) => fmt(value)} />
+                      <Tooltip formatter={(value) => fmtShort(value)} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               </Card>
-
             </div>
 
-            {/* CHART ROW 2 */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {/* Chart 3: Equity */}
                 <Card className="p-6">
                     <h3 className="text-lg font-bold text-slate-800 mb-6">{t.chart3Title}</h3>
                     <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={visibleSchedule} margin={{ top: 10, right: 10, left: isVN ? 20 : 0, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
+                        <AreaChart data={visibleSchedule} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                        <defs><linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient></defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                         <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                        <YAxis tickFormatter={fmtShort} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} width={45} />
-                        <Tooltip formatter={(value) => fmt(value)} />
+                        <YAxis tickFormatter={fmtShort} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} width={70} />
+                        <Tooltip formatter={(value) => fmtShort(value)} />
                         <Area type="monotone" dataKey="propertyValue" name={t.chart3Prop} stroke="#059669" fill="url(#colorValue)" strokeWidth={2} />
                         <Area type="monotone" dataKey="loanBalance" name={t.chart3Loan} stroke="#ef4444" fill="transparent" strokeDasharray="5 5" strokeWidth={2} />
                         <Area type="monotone" dataKey="equity" name={t.chart3Eq} stroke="#3b82f6" fill="transparent" strokeWidth={2} />
@@ -728,17 +556,16 @@ export default function RealEstateCalculator() {
                     </div>
                 </Card>
 
-                {/* Chart 4: Total Gains Stacked */}
                 <Card className="p-6 flex flex-col">
                     <h3 className="text-lg font-bold text-slate-800 mb-2">{t.chart4Title}</h3>
                     <p className="text-sm text-slate-500 mb-4">{t.chart4Sub}</p>
                     <div className="h-64 w-full mb-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={visibleSchedule} margin={{ top: 10, right: 10, left: isVN ? 20 : 0, bottom: 0 }} stacked>
+                            <BarChart data={visibleSchedule} margin={{ top: 10, right: 10, left: 10, bottom: 0 }} stacked>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                             <XAxis dataKey="year" axisLine={false} tickLine={false} />
-                            <YAxis tickFormatter={fmtShort} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} width={45} />
-                            <Tooltip formatter={(value) => fmt(value)} cursor={{fill: '#f1f5f9'}} />
+                            <YAxis tickFormatter={fmtShort} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} width={70} />
+                            <Tooltip formatter={(value) => fmtShort(value)} cursor={{fill: '#f1f5f9'}} />
                             <Legend />
                             <Bar dataKey="cashflow" name={t.tableCashflow} stackId="a" fill="#3b82f6" />
                             <Bar dataKey="principal" name={t.tablePrin} stackId="a" fill="#8b5cf6" />
@@ -746,23 +573,16 @@ export default function RealEstateCalculator() {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                    {/* Tax Note */}
                     <div className="mt-auto bg-slate-50 p-3 rounded-lg border border-slate-100 text-xs text-slate-600 flex items-start gap-2">
-                        <Info className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                        <p>
-                            <strong>{t.taxNoteTitle}</strong> {t.taxNoteDesc}
-                        </p>
+                        <Info className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" /><p><strong>{t.taxNoteTitle}</strong> {t.taxNoteDesc}</p>
                     </div>
                 </Card>
             </div>
 
-            {/* DATA TABLE */}
             <Card className="overflow-hidden">
               <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                 <h3 className="text-lg font-bold text-slate-800">{t.tableTitle}</h3>
-                <span className="text-sm text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
-                    {showFullSchedule ? t.showAll.replace('{term}', mortgageTerm) : t.showLess}
-                </span>
+                <span className="text-sm text-slate-400 bg-slate-100 px-3 py-1 rounded-full">{showFullSchedule ? t.showAll.replace('{term}', mortgageTerm) : t.showLess}</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm text-right">
@@ -786,9 +606,7 @@ export default function RealEstateCalculator() {
                         <td className="px-4 py-3 text-rose-500">-{fmtShort(row.operatingExpenses + (isVN ? row.taxBill : 0))}</td>
                         <td className="px-4 py-3 text-orange-500">-{fmtShort(row.interest)}</td>
                         <td className="px-4 py-3 text-blue-600">-{fmtShort(row.principal)}</td>
-                        <td className={`px-4 py-3 font-medium ${row.cashflow >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          {fmtShort(row.cashflow)}
-                        </td>
+                        <td className={`px-4 py-3 font-medium ${row.cashflow >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{fmtShort(row.cashflow)}</td>
                         <td className="px-4 py-3 font-bold text-slate-800 bg-slate-50/50">{fmtShort(row.totalGain)}</td>
                         <td className="px-4 py-3 text-slate-600">{fmtShort(row.equity)}</td>
                       </tr>
@@ -797,7 +615,6 @@ export default function RealEstateCalculator() {
                 </table>
               </div>
             </Card>
-
           </div>
         </div>
       </div>
