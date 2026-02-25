@@ -282,10 +282,10 @@ export default function RealEstateCalculator() {
 
   useEffect(() => {
     if (market === 'VN') {
-        setPropertyPrice(3500000000); // 3.5 tỷ
+        setPropertyPrice(4000000000); // 4.0 tỷ
         setDownPaymentPercent(30);
         setMortgageRate(9.0);
-        setMortgageTerm(25);
+        setMortgageTerm(30);
         setMonthlyRent(15000000); // 15 triệu
         setMonthlyStrata(1500000); // 1.5 triệu
         setAnnualPropertyTax(0);
