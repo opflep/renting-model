@@ -15,7 +15,10 @@ import { SheetAccessError, downloadTemplate, fetchSheet, parseWorkbook } from '.
 
 export default function App() {
   const [state, setState] = useState(loadState);
-  const { market, tab, scenario, stockScenario } = state;
+  const { market, tab, scenario } = state;
+  // The stock scenario is chosen on the Rental vs Stocks tab only; every
+  // other tab uses the base stock case so a hidden setting can't skew it.
+  const stockScenario = tab === 'compare' ? state.stockScenario : 'base';
   const profile = activeProfile(state);
   const profiles = state.profiles[market];
   const shared = state.shared[market];
@@ -177,9 +180,8 @@ export default function App() {
               </button>
             ))}
           </nav>
-          <div className="flex flex-wrap gap-2 sm:pb-2">
+          <div className="sm:pb-2">
             <ScenarioSwitch kind="rental" value={scenario} onChange={(v) => go({ scenario: v })} t={t} />
-            <ScenarioSwitch kind="stocks" value={stockScenario} onChange={(v) => go({ stockScenario: v })} t={t} />
           </div>
           </div>
         </div>
@@ -217,6 +219,8 @@ export default function App() {
               tab={tab}
               onReset={() => setState(actions.resetHouse())}
               initialCash={rental.initialCash}
+              stockScenario={stockScenario}
+              onStockScenario={(v) => go({ stockScenario: v })}
             />
           </aside>
         )}
