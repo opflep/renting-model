@@ -95,13 +95,20 @@ describe('scenarios', () => {
     const { applyScenario } = await import('./scenarios');
     const { analyzeAll } = await import('./store');
     const p = DEFAULTS.CA;
-    const bear = applyScenario(p, 'bear');
+    const bear = applyScenario(p, 'bear', 'bear');
     expect(bear.appreciation).toBe(1);
     expect(bear.rate).toBe(6);
     expect(bear.stocks.stockReturn).toBe(5);
     expect(bear.damming.helocRate).toBeCloseTo(6.45, 6);
-    expect(applyScenario(p, 'base')).toBe(p);
+    expect(applyScenario(p, 'base', 'base')).toBe(p);
     expect(applyScenario({ ...p, vacancy: 0 }, 'bull').vacancy).toBe(0);
+
+    // Rental and stock scenarios are independent.
+    const mixed = applyScenario(p, 'bear', 'bull');
+    expect(mixed.appreciation).toBe(1);
+    expect(mixed.stocks.stockReturn).toBe(9);
+    expect(applyScenario(p, 'base', 'bear').appreciation).toBe(3);
+    expect(applyScenario(p, 'base', 'bear').stocks.stockReturn).toBe(5);
 
     const all = analyzeAll(p);
     const irr = (k) => all[k].compare.rental.irr;

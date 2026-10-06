@@ -10,19 +10,20 @@ import SheetsDialog from './components/SheetsDialog';
 import { ScenarioBanner, ScenarioSwitch } from './components/Scenarios';
 import { makeFormatters } from './lib/format';
 import { STRINGS, tr } from './lib/i18n';
-import { actions, activeProfile, analyzeAll, inputsFor, loadState, mergeImport, saveState } from './lib/store';
+import { actions, activeProfile, analyzeAll, analyzeGrid, inputsFor, loadState, mergeImport, saveState } from './lib/store';
 import { SheetAccessError, downloadTemplate, fetchSheet, parseWorkbook } from './lib/sheets';
 
 export default function App() {
   const [state, setState] = useState(loadState);
-  const { market, tab, scenario } = state;
+  const { market, tab, scenario, stockScenario } = state;
   const profile = activeProfile(state);
   const profiles = state.profiles[market];
   const shared = state.shared[market];
   const t = STRINGS[market];
   const fmt = useMemo(() => makeFormatters(market), [market]);
   const p = useMemo(() => inputsFor(market, profile, shared), [market, profile, shared]);
-  const all = useMemo(() => analyzeAll(p), [p]);
+  const all = useMemo(() => analyzeAll(p, stockScenario), [p, stockScenario]);
+  const grid = useMemo(() => (tab === 'compare' ? analyzeGrid(p) : null), [p, tab]);
   const { safe, rental, compare, damming } = all[scenario];
 
   useEffect(() => saveState(state), [state]);
@@ -176,8 +177,9 @@ export default function App() {
               </button>
             ))}
           </nav>
-          <div className="sm:pb-2">
-            <ScenarioSwitch value={scenario} onChange={(v) => go({ scenario: v })} t={t} />
+          <div className="flex flex-wrap gap-2 sm:pb-2">
+            <ScenarioSwitch kind="rental" value={scenario} onChange={(v) => go({ scenario: v })} t={t} />
+            <ScenarioSwitch kind="stocks" value={stockScenario} onChange={(v) => go({ stockScenario: v })} t={t} />
           </div>
           </div>
         </div>
@@ -219,9 +221,21 @@ export default function App() {
           </aside>
         )}
         <div className="min-w-0">
-          <ScenarioBanner name={scenario} shifts={shared.scenarios[scenario] || {}} t={t} />
-          {tab === 'rental' && <RentalTab p={safe} rental={rental} compare={compare} all={all} scenario={scenario} t={t} fmt={fmt} />}
-          {tab === 'compare' && <CompareTab p={safe} rental={rental} compare={compare} all={all} scenario={scenario} t={t} fmt={fmt} />}
+          <ScenarioBanner rental={scenario} stocks={stockScenario} scenarios={shared.scenarios} t={t} />
+          {tab === 'rental' && <RentalTab p={safe} rental={rental} compare={compare} all={all} scenario={scenario} stockScenario={stockScenario} t={t} fmt={fmt} />}
+          {tab === 'compare' && (
+            <CompareTab
+              p={safe}
+              rental={rental}
+              compare={compare}
+              grid={grid}
+              scenario={scenario}
+              stockScenario={stockScenario}
+              onPickScenario={(r, s) => go({ scenario: r, stockScenario: s })}
+              t={t}
+              fmt={fmt}
+            />
+          )}
           {tab === 'damming' && <DammingTab p={safe} damming={damming} t={t} fmt={fmt} />}
           {tab === 'houses' && (
             <HousesTab
@@ -230,6 +244,7 @@ export default function App() {
               shared={shared}
               activeId={profile.id}
               scenario={scenario}
+              stockScenario={stockScenario}
               t={t}
               fmt={fmt}
               onOpen={(id) => setState((s) => ({ ...actions.select(id)(s), tab: 'rental' }))}

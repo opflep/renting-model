@@ -42,7 +42,7 @@ const cleanSource = (src) =>
   src && typeof src.sheetId === 'string' && typeof src.tab === 'string' ? { sheetId: src.sheetId, tab: src.tab } : undefined;
 
 export function initialState() {
-  const state = { market: 'CA', tab: 'rental', scenario: 'base', shared: {}, profiles: {}, active: {}, sources: {} };
+  const state = { market: 'CA', tab: 'rental', scenario: 'base', stockScenario: 'base', shared: {}, profiles: {}, active: {}, sources: {} };
   for (const m of MARKETS) {
     const first = newProfile(m, m === 'VN' ? 'Căn hộ 1' : 'House 1');
     state.shared[m] = sharedFields(m);
@@ -62,6 +62,7 @@ export function normalize(raw) {
     market: MARKETS.includes(raw.market) ? raw.market : 'CA',
     tab: raw.tab || 'rental',
     scenario: SCENARIOS.includes(raw.scenario) ? raw.scenario : 'base',
+    stockScenario: SCENARIOS.includes(raw.stockScenario) ? raw.stockScenario : 'base',
   };
   for (const m of MARKETS) {
     state.shared[m] = sharedFields(m, raw.shared?.[m]);
@@ -196,8 +197,8 @@ export function sanitize(p) {
   };
 }
 
-export function analyze(p, scenario = 'base') {
-  const safe = sanitize(applyScenario(p, scenario));
+export function analyze(p, rentalScenario = 'base', stockScenario = 'base') {
+  const safe = sanitize(applyScenario(p, rentalScenario, stockScenario));
   const rental = projectRental(safe);
   return {
     safe,
@@ -221,5 +222,10 @@ export function mergeImport(state, data) {
   return { ...state, profiles, sources: { ...incoming.sources, ...state.sources } };
 }
 
-// The same house under every scenario, for side-by-side tables.
-export const analyzeAll = (p) => Object.fromEntries(SCENARIOS.map((name) => [name, analyze(p, name)]));
+// The same house under every rental scenario, against one stock scenario.
+export const analyzeAll = (p, stockScenario = 'base') =>
+  Object.fromEntries(SCENARIOS.map((name) => [name, analyze(p, name, stockScenario)]));
+
+// Every rental × stock combination: grid[rental][stocks].
+export const analyzeGrid = (p) =>
+  Object.fromEntries(SCENARIOS.map((r) => [r, Object.fromEntries(SCENARIOS.map((s) => [s, analyze(p, r, s)]))]));
