@@ -44,6 +44,12 @@ export const DEFAULTS = {
       tfsaRoom: 102000,
       rrspRoom: 60000,
     },
+    // Bear / bull cases are shifts (in percentage points) applied on top of
+    // each house's own inputs and the shared stock assumptions.
+    scenarios: {
+      bear: { appreciation: -2, rentGrowth: -1, vacancy: 3, rate: 1.5, stockReturn: -2 },
+      bull: { appreciation: 1.5, rentGrowth: 1, vacancy: -1, rate: -1, stockReturn: 2 },
+    },
     damming: {
       homeValue: 1200000,
       homeGrowth: 3,
@@ -96,6 +102,10 @@ export const DEFAULTS = {
       depositRate: 5,
       tfsaRoom: 0,
       rrspRoom: 0,
+    },
+    scenarios: {
+      bear: { appreciation: -4, rentGrowth: -2, vacancy: 5, rate: 3, stockReturn: -4 },
+      bull: { appreciation: 3, rentGrowth: 1.5, vacancy: -2, rate: -1.5, stockReturn: 3 },
     },
     damming: null,
   },

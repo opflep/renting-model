@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Building2, ChevronDown, Landmark, LineChart, Percent, Receipt, RotateCcw, TrendingUp, Wallet, Home } from 'lucide-react';
+import { Building2, ChevronDown, GitBranch, Landmark, LineChart, Percent, Receipt, RotateCcw, TrendingUp, Wallet, Home } from 'lucide-react';
 import { Card, Group, NumberField, Toggle } from './ui';
+import { ScenarioEditor } from './Scenarios';
 import { tr } from '../lib/i18n';
 
 export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash }) {
@@ -86,6 +87,10 @@ export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash 
         {f('expInflation', P)}
         {f('sellingPct', { ...P, tip: t.sellingTip })}
         {f('horizon', { unit: t.years })}
+      </Group>
+
+      <Group title={shared(t.gScenarios)} icon={GitBranch} defaultOpen={false}>
+        <ScenarioEditor scenarios={p.scenarios} set={set} t={t} />
       </Group>
 
       <Group title={shared(t.gTax)} icon={Landmark}>

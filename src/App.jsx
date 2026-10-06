@@ -7,21 +7,23 @@ import CompareTab from './components/CompareTab';
 import DammingTab from './components/DammingTab';
 import HousesTab from './components/HousesTab';
 import SheetsDialog from './components/SheetsDialog';
+import { ScenarioBanner, ScenarioSwitch } from './components/Scenarios';
 import { makeFormatters } from './lib/format';
 import { STRINGS, tr } from './lib/i18n';
-import { actions, activeProfile, analyze, inputsFor, loadState, mergeImport, saveState } from './lib/store';
+import { actions, activeProfile, analyzeAll, inputsFor, loadState, mergeImport, saveState } from './lib/store';
 import { SheetAccessError, downloadTemplate, fetchSheet, parseWorkbook } from './lib/sheets';
 
 export default function App() {
   const [state, setState] = useState(loadState);
-  const { market, tab } = state;
+  const { market, tab, scenario } = state;
   const profile = activeProfile(state);
   const profiles = state.profiles[market];
   const shared = state.shared[market];
   const t = STRINGS[market];
   const fmt = useMemo(() => makeFormatters(market), [market]);
   const p = useMemo(() => inputsFor(market, profile, shared), [market, profile, shared]);
-  const { safe, rental, compare, damming } = useMemo(() => analyze(p), [p]);
+  const all = useMemo(() => analyzeAll(p), [p]);
+  const { safe, rental, compare, damming } = all[scenario];
 
   useEffect(() => saveState(state), [state]);
   useEffect(() => {
@@ -155,6 +157,7 @@ export default function App() {
             onSheets={() => setSheetsOpen(true)}
           />
 
+          <div className="flex flex-col-reverse sm:flex-row sm:items-end justify-between gap-3">
           <nav className="flex gap-1 -mb-px overflow-x-auto" role="tablist">
             {tabs.map(({ id, label, icon, disabled }) => (
               <button
@@ -173,6 +176,10 @@ export default function App() {
               </button>
             ))}
           </nav>
+          <div className="sm:pb-2">
+            <ScenarioSwitch value={scenario} onChange={(v) => go({ scenario: v })} t={t} />
+          </div>
+          </div>
         </div>
       </header>
 
@@ -212,8 +219,9 @@ export default function App() {
           </aside>
         )}
         <div className="min-w-0">
-          {tab === 'rental' && <RentalTab p={safe} rental={rental} compare={compare} t={t} fmt={fmt} />}
-          {tab === 'compare' && <CompareTab p={safe} rental={rental} compare={compare} t={t} fmt={fmt} />}
+          <ScenarioBanner name={scenario} shifts={shared.scenarios[scenario] || {}} t={t} />
+          {tab === 'rental' && <RentalTab p={safe} rental={rental} compare={compare} all={all} scenario={scenario} t={t} fmt={fmt} />}
+          {tab === 'compare' && <CompareTab p={safe} rental={rental} compare={compare} all={all} scenario={scenario} t={t} fmt={fmt} />}
           {tab === 'damming' && <DammingTab p={safe} damming={damming} t={t} fmt={fmt} />}
           {tab === 'houses' && (
             <HousesTab
@@ -221,6 +229,7 @@ export default function App() {
               profiles={profiles}
               shared={shared}
               activeId={profile.id}
+              scenario={scenario}
               t={t}
               fmt={fmt}
               onOpen={(id) => setState((s) => ({ ...actions.select(id)(s), tab: 'rental' }))}

@@ -4,8 +4,9 @@ import { ChevronDown } from 'lucide-react';
 import { Card, CardHeader, ChartTooltip, Kpi, LegendRow } from './ui';
 import { INK, SERIES, axisProps } from '../lib/theme';
 import { tr } from '../lib/i18n';
+import { ScenarioTable } from './Scenarios';
 
-export default function RentalTab({ p, rental, compare, t, fmt }) {
+export default function RentalTab({ p, rental, compare, all, scenario, t, fmt }) {
   const [showAll, setShowAll] = useState(false);
   const rows = rental.rows;
   const y1 = rows[0];
@@ -135,6 +136,8 @@ export default function RentalTab({ p, rental, compare, t, fmt }) {
           </div>
         </Card>
       </div>
+
+      <ScenarioTable all={all} active={scenario} t={t} fmt={fmt} horizon={p.horizon} />
 
       <ExitCard p={p} last={last} t={t} fmt={fmt} />
 

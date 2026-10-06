@@ -2,9 +2,10 @@
 // by every house (your tax situation, stock assumptions, your own home/HELOC).
 import { DEFAULTS } from './defaults';
 import { compareRentalVsStocks, projectRental, simulateCashDamming } from './finance';
+import { SCENARIOS, applyScenario } from './scenarios';
 
 export const STORAGE_KEY = 'renting-model:v3';
-const SHARED_KEYS = ['tax', 'stocks', 'damming'];
+const SHARED_KEYS = ['tax', 'stocks', 'damming', 'scenarios'];
 export const MARKETS = ['CA', 'VN'];
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -23,6 +24,10 @@ const sharedFields = (market, src = {}) => {
     tax: { ...d.tax, ...src.tax },
     stocks: { ...d.stocks, ...src.stocks },
     damming: d.damming && { ...d.damming, ...src.damming },
+    scenarios: {
+      bear: { ...d.scenarios.bear, ...src.scenarios?.bear },
+      bull: { ...d.scenarios.bull, ...src.scenarios?.bull },
+    },
   };
 };
 
@@ -37,7 +42,7 @@ const cleanSource = (src) =>
   src && typeof src.sheetId === 'string' && typeof src.tab === 'string' ? { sheetId: src.sheetId, tab: src.tab } : undefined;
 
 export function initialState() {
-  const state = { market: 'CA', tab: 'rental', shared: {}, profiles: {}, active: {}, sources: {} };
+  const state = { market: 'CA', tab: 'rental', scenario: 'base', shared: {}, profiles: {}, active: {}, sources: {} };
   for (const m of MARKETS) {
     const first = newProfile(m, m === 'VN' ? 'Căn hộ 1' : 'House 1');
     state.shared[m] = sharedFields(m);
@@ -52,7 +57,12 @@ export function initialState() {
 export function normalize(raw) {
   const base = initialState();
   if (!raw || typeof raw !== 'object') return base;
-  const state = { ...base, market: MARKETS.includes(raw.market) ? raw.market : 'CA', tab: raw.tab || 'rental' };
+  const state = {
+    ...base,
+    market: MARKETS.includes(raw.market) ? raw.market : 'CA',
+    tab: raw.tab || 'rental',
+    scenario: SCENARIOS.includes(raw.scenario) ? raw.scenario : 'base',
+  };
   for (const m of MARKETS) {
     state.shared[m] = sharedFields(m, raw.shared?.[m]);
     const list = Array.isArray(raw.profiles?.[m]) ? raw.profiles[m] : [];
@@ -186,8 +196,8 @@ export function sanitize(p) {
   };
 }
 
-export function analyze(p) {
-  const safe = sanitize(p);
+export function analyze(p, scenario = 'base') {
+  const safe = sanitize(applyScenario(p, scenario));
   const rental = projectRental(safe);
   return {
     safe,
@@ -210,3 +220,6 @@ export function mergeImport(state, data) {
   }
   return { ...state, profiles, sources: { ...incoming.sources, ...state.sources } };
 }
+
+// The same house under every scenario, for side-by-side tables.
+export const analyzeAll = (p) => Object.fromEntries(SCENARIOS.map((name) => [name, analyze(p, name)]));

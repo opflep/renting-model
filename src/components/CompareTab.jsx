@@ -3,11 +3,12 @@ import { AlertTriangle, Info } from 'lucide-react';
 import { Card, CardHeader, ChartTooltip, Kpi, LegendRow } from './ui';
 import { INK, SERIES, axisProps } from '../lib/theme';
 import { tr } from '../lib/i18n';
+import { ScenarioTable } from './Scenarios';
 
 // Fixed color per option (follows the entity, not its rank).
 const COLOR = { rental: SERIES[0], nonreg: SERIES[1], vnstock: SERIES[1], tfsa: SERIES[2], rrsp: SERIES[3], deposit: SERIES[4] };
 
-export default function CompareTab({ p, rental, compare, t, fmt }) {
+export default function CompareTab({ p, rental, compare, all, scenario, t, fmt }) {
   const n = p.horizon;
   const isVN = p.market === 'VN';
   const kinds = Object.keys(compare.accounts);
@@ -96,6 +97,8 @@ export default function CompareTab({ p, rental, compare, t, fmt }) {
           </tbody>
         </table>
       </Card>
+
+      <ScenarioTable all={all} active={scenario} t={t} fmt={fmt} horizon={n} />
 
       <div>
         <h3 className="text-[15px] font-semibold text-slate-900 mb-3">{t.taxHow}</h3>
