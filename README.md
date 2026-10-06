@@ -25,13 +25,16 @@ Live: https://opflep.github.io/renting-model
 
 **Saved houses** — save any number of properties per market (rename, duplicate, delete), compare them side by side, and export/import them as JSON. Property-specific inputs are stored per house; your tax situation, stock assumptions and home/HELOC details are shared across houses. Everything is kept in your browser's localStorage.
 
+**Google Sheets link** — keep your houses in a Google Sheet, one tab per house. Column A holds field labels (`Purchase price`, `Down payment (%)`, `Monthly rent`, `Strata / mo`, … in English or Vietnamese), column B the values (`530000`, `20%`, `2.9k`, `4 tỷ`, `15 tr` all work). Share the sheet as *Anyone with the link → Viewer*, paste the link, and every tab becomes a house. Linked houses re-sync when the app opens or when you press Sync; the sheet wins over local edits, missing rows use defaults, and houses whose tab was deleted are kept as local copies. The browser downloads the sheet directly from Google's export endpoint, so no API key or sign-in is needed. A template (.xlsx) can be downloaded from the dialog, and local .xlsx files can be imported too.
+
 The model uses simple constant rates of return (no volatility). It is educational, not financial or tax advice.
 
 ## Project layout
 
 ```
 src/lib/finance.js     pure financial engine (mortgage, rental, accounts, IRR, cash damming)
-src/lib/store.js       saved-house profiles, persistence, import/export
+src/lib/store.js       saved-house profiles, persistence, import/export, sheet sync
+src/lib/sheets.js      Google Sheets / .xlsx parsing and template
 src/lib/defaults.js    default assumptions per market
 src/lib/i18n.js        English / Vietnamese strings
 src/components/        UI (inputs panel, tabs, profile bar)

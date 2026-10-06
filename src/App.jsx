@@ -1,4 +1,4 @@
-import { createElement, useEffect, useMemo, useState } from 'react';
+import { createElement, useEffect, useMemo, useRef, useState } from 'react';
 import { Building2, LayoutList, Scale, Waves } from 'lucide-react';
 import InputsPanel from './components/InputsPanel';
 import ProfileBar from './components/ProfileBar';
@@ -6,9 +6,11 @@ import RentalTab from './components/RentalTab';
 import CompareTab from './components/CompareTab';
 import DammingTab from './components/DammingTab';
 import HousesTab from './components/HousesTab';
+import SheetsDialog from './components/SheetsDialog';
 import { makeFormatters } from './lib/format';
 import { STRINGS, tr } from './lib/i18n';
 import { actions, activeProfile, analyze, inputsFor, loadState, mergeImport, saveState } from './lib/store';
+import { SheetAccessError, downloadTemplate, fetchSheet, parseWorkbook } from './lib/sheets';
 
 export default function App() {
   const [state, setState] = useState(loadState);
@@ -27,6 +29,67 @@ export default function App() {
   }, [market]);
 
   const go = (patch) => setState((s) => ({ ...s, ...patch }));
+
+  // --- Google Sheets ---------------------------------------------------------
+  const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [syncing, setSyncing] = useState(null);
+  const [syncErrors, setSyncErrors] = useState({});
+  const [notice, setNotice] = useState('');
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  const sheetError = (e) =>
+    e instanceof SheetAccessError ? (e.message === 'not-found' ? t.shNotFound : t.shNotShared) : tr(t.shSyncFailed, { v: e.message });
+
+  // Returns an error message, or null on success.
+  const syncSheet = async (id, url, { isNew = false, quiet = false } = {}) => {
+    setSyncing(isNew ? 'new' : id);
+    try {
+      const fallback = stateRef.current.sources[id]?.market || stateRef.current.market;
+      const houses = await parseWorkbook(await fetchSheet(id), fallback);
+      if (!houses.length) throw new Error(t.shNoHouses);
+      setState(actions.applySheet(id, url, houses));
+      setSyncErrors((e) => ({ ...e, [id]: null }));
+      if (!quiet) setNotice(tr(t.shAdded, { n: houses.length }));
+      return null;
+    } catch (e) {
+      const msg = e.message === t.shNoHouses ? t.shNoHouses : sheetError(e);
+      setSyncErrors((errs) => ({ ...errs, [id]: msg }));
+      return msg;
+    } finally {
+      setSyncing(null);
+    }
+  };
+
+  const importXlsxFile = async (file) => {
+    try {
+      const houses = await parseWorkbook(await file.arrayBuffer(), market);
+      if (!houses.length) return t.shNoHouses;
+      const tmp = `file:${Date.now()}`;
+      setState((s) => actions.unlinkSheet(tmp)(actions.applySheet(tmp, '', houses)(s)));
+      setNotice(tr(t.shImported, { n: houses.length }));
+      return null;
+    } catch (e) {
+      return tr(t.shSyncFailed, { v: e.message });
+    }
+  };
+
+  // Pull fresh numbers from every linked sheet when the app opens.
+  useEffect(() => {
+    for (const [id, src] of Object.entries(stateRef.current.sources)) syncSheet(id, src.url, { quiet: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(''), 4000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  const profilesBySheet = {};
+  for (const m of Object.keys(state.profiles)) {
+    for (const x of state.profiles[m]) if (x.source) (profilesBySheet[x.source.sheetId] ||= []).push(x.name);
+  }
 
   const exportProfiles = () => {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -89,6 +152,7 @@ export default function App() {
             onRemove={(id) => setState(actions.remove(id))}
             onExport={exportProfiles}
             onImport={importProfiles}
+            onSheets={() => setSheetsOpen(true)}
           />
 
           <nav className="flex gap-1 -mb-px overflow-x-auto" role="tablist">
@@ -111,6 +175,27 @@ export default function App() {
           </nav>
         </div>
       </header>
+
+      <SheetsDialog
+        open={sheetsOpen}
+        onClose={() => setSheetsOpen(false)}
+        t={t}
+        sources={state.sources}
+        profilesBySheet={profilesBySheet}
+        syncing={syncing}
+        errors={syncErrors}
+        onLink={(id, url) => syncSheet(id, url, { isNew: true })}
+        onSync={(id) => syncSheet(id, state.sources[id].url)}
+        onUnlink={(id) => setState(actions.unlinkSheet(id))}
+        onTemplate={() => downloadTemplate(market)}
+        onFile={importXlsxFile}
+      />
+
+      {notice && (
+        <div role="status" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-xl bg-slate-900 px-4 py-2.5 text-sm text-white shadow-xl">
+          {notice}
+        </div>
+      )}
 
       <main className={`max-w-[1440px] mx-auto px-4 md:px-6 py-6 grid grid-cols-1 gap-6 ${tab === 'houses' ? '' : 'lg:grid-cols-[300px_1fr]'}`}>
         {tab !== 'houses' && (
