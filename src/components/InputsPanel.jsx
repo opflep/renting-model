@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Building2, ChevronDown, GitBranch, Landmark, LineChart, Percent, Receipt, RotateCcw, TrendingUp, Wallet, Home } from 'lucide-react';
 import { Card, Group, NumberField, Toggle } from './ui';
-import { ScenarioEditor } from './Scenarios';
+import { ScenarioEditor, ScenarioSwitch } from './Scenarios';
 import { tr } from '../lib/i18n';
 
-export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash }) {
+export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash, stockScenario, onStockScenario }) {
   const isVN = p.market === 'VN';
   // VN: price in tỷ, other money in triệu. CA: dollars.
   const big = isVN ? { scale: 1e9, unit: 'tỷ', step: 0.05 } : { unit: '$', step: 5000 };
@@ -49,6 +49,17 @@ export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash 
 
       {tab === 'compare' && (
         <Group title={shared(t.gStocks)} icon={LineChart}>
+          <div className="col-span-2">
+            <ScenarioSwitch kind="stocks" value={stockScenario} onChange={onStockScenario} t={t} block />
+            {stockScenario !== 'base' && (
+              <p className="mt-1.5 text-[11px] text-slate-500">
+                {tr(t.scStockNote, {
+                  v: `${p.scenarios[stockScenario].stockReturn > 0 ? '+' : ''}${p.scenarios[stockScenario].stockReturn}`,
+                  r: Math.round((p.stocks.stockReturn + (Number(p.scenarios[stockScenario].stockReturn) || 0)) * 100) / 100,
+                })}
+              </p>
+            )}
+          </div>
           {f('stocks.stockReturn', { ...P, tip: t.stockReturnTip })}
           {f('stocks.dividendYield', P)}
           {f('stocks.fee', { unit: '%', step: 0.05 })}

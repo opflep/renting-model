@@ -11,14 +11,21 @@ const SCENARIO_META = {
 
 const KIND_ICON = { rental: Building2, stocks: LineChart };
 
-export function ScenarioSwitch({ kind, value, onChange, t }) {
+// `block` renders a full-width version for the narrow assumptions panel.
+export function ScenarioSwitch({ kind, value, onChange, t, block = false }) {
   const KindIcon = KIND_ICON[kind];
   return (
-    <div className="inline-flex items-center rounded-xl bg-slate-100 p-1" role="radiogroup" aria-label={t[`scKind_${kind}`]}>
-      <span className="inline-flex items-center gap-1 pl-2 pr-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-        <KindIcon className="w-3.5 h-3.5" />
-        {t[`scKind_${kind}`]}
-      </span>
+    <div
+      className={`${block ? 'flex w-full [&>button]:flex-1 [&>button]:justify-center' : 'inline-flex items-center'} rounded-xl bg-slate-100 p-1`}
+      role="radiogroup"
+      aria-label={block ? t.scStockLabel : t[`scKind_${kind}`]}
+    >
+      {!block && (
+        <span className="inline-flex items-center gap-1 pl-2 pr-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          <KindIcon className="w-3.5 h-3.5" />
+          {t[`scKind_${kind}`]}
+        </span>
+      )}
       {SCENARIOS.map((name) => {
         const { icon: Icon, on } = SCENARIO_META[name];
         return (
