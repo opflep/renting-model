@@ -5,11 +5,11 @@ import { analyzeAll, inputsFor } from '../lib/store';
 import { tr } from '../lib/i18n';
 
 // Side-by-side comparison of every saved house in the current market.
-export default function HousesTab({ market, profiles, shared, activeId, scenario, t, fmt, onOpen }) {
+export default function HousesTab({ market, profiles, shared, activeId, scenario, stockScenario, t, fmt, onOpen }) {
   const rows = useMemo(
     () =>
       profiles.map((profile) => {
-        const all = analyzeAll(inputsFor(market, profile, shared));
+        const all = analyzeAll(inputsFor(market, profile, shared), stockScenario);
         const { safe, rental, compare, damming } = all[scenario];
         const y1 = rental.rows[0];
         const n = safe.horizon;
@@ -32,7 +32,7 @@ export default function HousesTab({ market, profiles, shared, activeId, scenario
           damBenefit: damming?.netBenefit,
         };
       }),
-    [market, profiles, shared, scenario]
+    [market, profiles, shared, scenario, stockScenario]
   );
 
   const bestIrr = Math.max(...rows.map((r) => r.irr ?? -Infinity));

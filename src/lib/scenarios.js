@@ -1,16 +1,21 @@
 // Bear / base / bull cases. A scenario shifts a handful of assumptions by a
 // number of percentage points on top of whatever each house already uses,
 // so a house with 3% appreciation and a bear shift of -2 runs at 1%.
+// The rental and the stock market get their own scenario, so a bear housing
+// market can be tested against a bull stock market and vice versa.
 
 export const SCENARIOS = ['bear', 'base', 'bull'];
-export const SCENARIO_FIELDS = ['appreciation', 'rentGrowth', 'vacancy', 'rate', 'stockReturn'];
+export const RENTAL_FIELDS = ['appreciation', 'rentGrowth', 'vacancy', 'rate'];
+export const STOCK_FIELDS = ['stockReturn'];
+export const SCENARIO_FIELDS = [...RENTAL_FIELDS, ...STOCK_FIELDS];
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
-export function applyScenario(p, name) {
-  const d = name === 'base' ? null : p.scenarios?.[name];
-  if (!d) return p;
-  const shift = (k) => Number(d[k]) || 0;
+export function applyScenario(p, rental = 'base', stocks = 'base') {
+  const r = rental === 'base' ? null : p.scenarios?.[rental];
+  const s = stocks === 'base' ? null : p.scenarios?.[stocks];
+  if (!r && !s) return p;
+  const shift = (k) => Number((STOCK_FIELDS.includes(k) ? s : r)?.[k]) || 0;
   return {
     ...p,
     appreciation: p.appreciation + shift('appreciation'),
