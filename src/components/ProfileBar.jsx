@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
-import { Check, Copy, Download, Home, Pencil, Plus, Trash2, Upload } from 'lucide-react';
+import { Check, Copy, Download, FileSpreadsheet, Home, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { tr } from '../lib/i18n';
 
 const btn = 'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40 disabled:hover:bg-transparent';
 
-export default function ProfileBar({ profiles, activeId, t, onSelect, onAdd, onDuplicate, onRename, onRemove, onExport, onImport }) {
+export default function ProfileBar({ profiles, activeId, t, onSelect, onAdd, onDuplicate, onRename, onRemove, onExport, onImport, onSheets }) {
   const active = profiles.find((x) => x.id === activeId);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
@@ -60,6 +60,12 @@ export default function ProfileBar({ profiles, activeId, t, onSelect, onAdd, onD
           </select>
         )}
         <span className="text-xs text-slate-400 whitespace-nowrap">{tr(t.pCount, { n: profiles.length })}</span>
+        {active.source && (
+          <span title={t.pLinkedTip} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 whitespace-nowrap">
+            <FileSpreadsheet className="w-3 h-3" />
+            {tr(t.pLinked, { tab: active.source.tab })}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-0.5">
@@ -81,6 +87,9 @@ export default function ProfileBar({ profiles, activeId, t, onSelect, onAdd, onD
           <Trash2 className="w-3.5 h-3.5" /> {t.pDelete}
         </button>
         <span className="mx-1 h-4 w-px bg-slate-200 hidden sm:block" />
+        <button type="button" className={`${btn} !text-emerald-700 hover:!bg-emerald-50`} onClick={onSheets}>
+          <FileSpreadsheet className="w-3.5 h-3.5" /> {t.pSheets}
+        </button>
         <button type="button" className={btn} onClick={onExport} title={t.pExportTip}>
           <Download className="w-3.5 h-3.5" /> {t.pExport}
         </button>
