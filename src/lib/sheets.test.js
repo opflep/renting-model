@@ -76,7 +76,7 @@ describe('template', () => {
       const houses = await parseWorkbook(buf, m === 'CA' ? 'VN' : 'CA');
       expect(houses).toHaveLength(2);
       expect(houses[0].market).toBe(m);
-      const skip = new Set(['market', 'tax', 'stocks', 'damming', 'ccaRate', ...(m === 'VN' ? ['claimCCA', 'buildingPct'] : [])]);
+      const skip = new Set(['market', 'tax', 'stocks', 'damming', 'scenarios', 'ccaRate', ...(m === 'VN' ? ['claimCCA', 'buildingPct'] : [])]);
       const expected = Object.fromEntries(Object.entries(DEFAULTS[m]).filter(([k]) => !skip.has(k)));
       expect(houses[0].inputs).toEqual(expected);
     });

@@ -89,3 +89,23 @@ describe('contribution room', () => {
     expect(res.values[2]).toBeCloseTo(tfsa + nonreg, 6);
   });
 });
+
+describe('scenarios', () => {
+  it('shifts assumptions on top of the inputs and orders outcomes', async () => {
+    const { applyScenario } = await import('./scenarios');
+    const { analyzeAll } = await import('./store');
+    const p = DEFAULTS.CA;
+    const bear = applyScenario(p, 'bear');
+    expect(bear.appreciation).toBe(1);
+    expect(bear.rate).toBe(6);
+    expect(bear.stocks.stockReturn).toBe(5);
+    expect(bear.damming.helocRate).toBeCloseTo(6.45, 6);
+    expect(applyScenario(p, 'base')).toBe(p);
+    expect(applyScenario({ ...p, vacancy: 0 }, 'bull').vacancy).toBe(0);
+
+    const all = analyzeAll(p);
+    const irr = (k) => all[k].compare.rental.irr;
+    expect(irr('bear')).toBeLessThan(irr('base'));
+    expect(irr('base')).toBeLessThan(irr('bull'));
+  });
+});

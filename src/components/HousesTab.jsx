@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { ArrowRight, Trophy } from 'lucide-react';
 import { Card } from './ui';
-import { analyze, inputsFor } from '../lib/store';
+import { analyzeAll, inputsFor } from '../lib/store';
 import { tr } from '../lib/i18n';
 
 // Side-by-side comparison of every saved house in the current market.
-export default function HousesTab({ market, profiles, shared, activeId, t, fmt, onOpen }) {
+export default function HousesTab({ market, profiles, shared, activeId, scenario, t, fmt, onOpen }) {
   const rows = useMemo(
     () =>
       profiles.map((profile) => {
-        const { safe, rental, compare, damming } = analyze(inputsFor(market, profile, shared));
+        const all = analyzeAll(inputsFor(market, profile, shared));
+        const { safe, rental, compare, damming } = all[scenario];
         const y1 = rental.rows[0];
         const n = safe.horizon;
         const stocks = Object.values(compare.accounts).map((a) => a.values[n]);
@@ -23,13 +24,15 @@ export default function HousesTab({ market, profiles, shared, activeId, t, fmt, 
           cfMonth: y1.cashflow / 12,
           capRate: safe.price > 0 ? ((y1.grossRent - y1.operatingExpenses) / safe.price) * 100 : 0,
           irr: compare.rental.irr,
+          irrBear: all.bear.compare.rental.irr,
+          irrBull: all.bull.compare.rental.irr,
           wealth: compare.rental.wealth[n],
           vsStock: compare.rental.wealth[n] - bestStock,
           breakEven: compare.breakEven,
           damBenefit: damming?.netBenefit,
         };
       }),
-    [market, profiles, shared]
+    [market, profiles, shared, scenario]
   );
 
   const bestIrr = Math.max(...rows.map((r) => r.irr ?? -Infinity));
@@ -51,6 +54,7 @@ export default function HousesTab({ market, profiles, shared, activeId, t, fmt, 
                 <th>{t.kAfterTax}</th>
                 <th>{t.kCap}</th>
                 <th>{t.kIrr}</th>
+                <th>{t.hIrrRange}</th>
                 <th>{t.hWealth}</th>
                 <th>{t.hVsStock}</th>
                 <th>{t.kBreakEven}</th>
@@ -77,6 +81,11 @@ export default function HousesTab({ market, profiles, shared, activeId, t, fmt, 
                   <td className={tone(r.cfMonth)}>{fmt.short(r.cfMonth)}</td>
                   <td>{fmt.pct(r.capRate)}</td>
                   <td className="font-semibold text-slate-900">{fmt.pct(r.irr)}</td>
+                  <td className="text-xs">
+                    <span className="text-rose-700">{fmt.pct(r.irrBear)}</span>
+                    <span className="text-slate-300"> – </span>
+                    <span className="text-emerald-700">{fmt.pct(r.irrBull)}</span>
+                  </td>
                   <td>{fmt.short(r.wealth)}</td>
                   <td className={tone(r.vsStock)}>{(r.vsStock >= 0 ? '+' : '') + fmt.short(r.vsStock)}</td>
                   <td>{fmt.pct(r.breakEven)}</td>

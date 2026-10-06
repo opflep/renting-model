@@ -124,7 +124,12 @@ export default function SheetsDialog({ open, onClose, t, sources, profilesByShee
         )}
 
         <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
-          <p className="leading-relaxed">{t.shNote}</p>
+          <p className="leading-relaxed">
+            {t.shNote}{' '}
+            <a href="https://github.com/opflep/renting-model/blob/main/docs/google-sheets.md" target="_blank" rel="noreferrer" className="font-medium text-blue-700 hover:text-blue-900">
+              {t.shGuide} →
+            </a>
+          </p>
           <button type="button" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg px-2.5 py-1.5 font-medium text-slate-700 hover:bg-slate-100">
             <Upload className="w-3.5 h-3.5" /> {t.shFile}
           </button>
