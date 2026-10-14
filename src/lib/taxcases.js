@@ -65,19 +65,65 @@ export function normalizeTax(market, raw = {}) {
 
 export const newTaxCase = (market, name, tax) => ({ id: uid(), name: String(name).slice(0, 60), tax: normalizeTax(market, tax) });
 
+// Seeded cases. SEED_VERSION bumps when a case is added so existing saves
+// pick up the new one (by name) without touching the user's own cases.
+export const SEED_VERSION = 2;
 export function defaultTaxCases(market) {
   if (market !== 'CA') return [newTaxCase(market, 'Mặc định', {})];
   return [
     newTaxCase('CA', 'Top bracket throughout', {}),
     newTaxCase('CA', 'Lower from year 5', { steps: [{ from: 5, marginal: 35, dividend: 18 }] }),
     newTaxCase('CA', 'Lower from year 10', { steps: [{ from: 10, marginal: 35, dividend: 18 }] }),
+    // Semi-retirement on ~$130k of consulting income from 2031 (year 5 of a
+    // 2027 purchase), easing further from 2038. The sale is taxed by stacking
+    // recapture and the gain on top of that income using BC brackets.
+    newTaxCase('CA', 'Semi-retire 2031', {
+      steps: [
+        { from: 5, marginal: 38.5, dividend: 18 },
+        { from: 12, marginal: 30, dividend: 10 },
+      ],
+      saleOtherIncome: 130000,
+    }),
   ];
 }
+
+// Combined federal + BC marginal brackets (2025 thresholds, approximate).
+// Used only to tax the sale year when `saleOtherIncome` is set, so a large
+// recapture + capital gain is pushed up through the brackets instead of
+// being taxed at a single flat rate.
+export const BC_BRACKETS = [
+  [0, 20.06],
+  [49279, 22.7],
+  [57375, 28.2],
+  [98560, 31.0],
+  [113158, 32.79],
+  [114750, 38.29],
+  [137407, 40.7],
+  [177882, 43.7],
+  [186306, 45.8],
+  [253414, 49.8],
+  [259829, 53.5],
+];
+
+const bracketTax = (income) => {
+  let tax = 0;
+  for (let i = 0; i < BC_BRACKETS.length; i++) {
+    const [lo, rate] = BC_BRACKETS[i];
+    const hi = BC_BRACKETS[i + 1]?.[0] ?? Infinity;
+    if (income <= lo) break;
+    tax += (Math.min(income, hi) - lo) * (rate / 100);
+  }
+  return tax;
+};
+
+// Tax on `extra` income stacked on top of `base` income.
+export const stackedTax = (base, extra) => (extra <= 0 ? 0 : bracketTax(base + extra) - bracketTax(base));
 
 // Short human summary, e.g. "53.5% · 35% from yr 5 · CCA from yr 3".
 export function describeTax(tax, t) {
   const parts = [`${tax.marginal}%`];
   for (const s of tax.steps || []) parts.push(t.tcStep.replace('{m}', s.marginal).replace('{y}', s.from));
+  if (tax.saleOtherIncome > 0) parts.push(t.tcSale.replace('{v}', `$${Math.round(tax.saleOtherIncome / 1000)}k`));
   const cca = tax.ccaSteps || [];
   if (cca.length) {
     const txt = cca.map((s) => (s.claim ? t.tcCcaOn : t.tcCcaOff).replace('{y}', s.from)).join(', ');

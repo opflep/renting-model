@@ -2,7 +2,7 @@
 // All amounts are in the market's base currency unit ($1 or 1 VND).
 // Rates are passed as percentages (e.g. 4.5 for 4.5%) unless noted.
 
-import { ccaClaimAt, dividendAt, marginalAt } from './taxcases';
+import { ccaClaimAt, dividendAt, marginalAt, stackedTax } from './taxcases';
 
 const pct = (v) => (Number(v) || 0) / 100;
 
@@ -159,13 +159,25 @@ function saleOutcome({ p, value, balance, closingCosts, buildingCost, ucc, isVN,
   } else {
     const acb = p.price + closingCosts;
     capitalGain = value - sellingCosts - acb;
-    capitalGainsTax = Math.max(0, capitalGain) * pct(p.tax.cgInclusion) * marginal;
+    const taxableGain = Math.max(0, capitalGain) * pct(p.tax.cgInclusion);
+    let recapture = 0;
     if (p.claimCCA && buildingCost > 0) {
       // Recapture is fully taxable income. A terminal loss is ignored: when
       // land and building are sold together, s.13(21.1) reallocates proceeds
       // to the building and all but eliminates it.
       const buildingProceeds = Math.min(buildingCost, (value - sellingCosts) * pct(p.buildingPct));
-      recaptureTax = Math.max(0, buildingProceeds - ucc) * marginal;
+      recapture = Math.max(0, buildingProceeds - ucc);
+    }
+    if (p.tax.saleOtherIncome > 0) {
+      // Stack the sale on top of that year's other income so a big
+      // recapture + gain climbs the brackets. Split the tax pro rata.
+      const total = taxableGain + recapture;
+      const tax = stackedTax(p.tax.saleOtherIncome, total);
+      capitalGainsTax = total > 0 ? (tax * taxableGain) / total : 0;
+      recaptureTax = total > 0 ? (tax * recapture) / total : 0;
+    } else {
+      capitalGainsTax = taxableGain * marginal;
+      recaptureTax = recapture * marginal;
     }
   }
   const netSaleProceeds = value - sellingCosts - balance - capitalGainsTax - recaptureTax;

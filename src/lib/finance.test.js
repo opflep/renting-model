@@ -164,3 +164,22 @@ describe('cca cases', () => {
     expect(r[2].cca).toBeGreaterThan(0);
   });
 });
+
+describe('sale-year bracket stacking', () => {
+  it('taxes recapture and the gain progressively when other income is set', async () => {
+    const { stackedTax, BC_BRACKETS } = await import('./taxcases');
+    expect(stackedTax(130000, 0)).toBe(0);
+    // $100k on top of $130k sits in the 38–46% brackets, not at 53.5%.
+    const eff = stackedTax(130000, 100000) / 100000;
+    expect(eff).toBeGreaterThan(0.38);
+    expect(eff).toBeLessThan(0.46);
+    // $400k on top climbs to the top bracket.
+    expect(stackedTax(130000, 400000) / 400000).toBeGreaterThan(0.48);
+    expect(BC_BRACKETS.at(-1)[1]).toBe(53.5);
+
+    const p = { ...DEFAULTS.CA, claimCCA: true, tax: { ...DEFAULTS.CA.tax, steps: [{ from: 5, marginal: 35, dividend: 18 }], saleOtherIncome: 130000 } };
+    const flat = projectRental({ ...p, tax: { ...p.tax, saleOtherIncome: 0 } }).rows.at(-1);
+    const stacked = projectRental(p).rows.at(-1);
+    expect(stacked.capitalGainsTax + stacked.recaptureTax).toBeGreaterThan(flat.capitalGainsTax + flat.recaptureTax);
+  });
+});

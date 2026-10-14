@@ -3,7 +3,7 @@
 import { DEFAULTS } from './defaults';
 import { compareRentalVsStocks, projectRental, simulateCashDamming } from './finance';
 import { SCENARIOS, applyScenario } from './scenarios';
-import { defaultTaxCases, newTaxCase, normalizeTax } from './taxcases';
+import { SEED_VERSION, defaultTaxCases, newTaxCase, normalizeTax } from './taxcases';
 
 export const STORAGE_KEY = 'renting-model:v3';
 const SHARED_KEYS = ['tax', 'stocks', 'damming', 'scenarios'];
@@ -27,9 +27,13 @@ const taxCasesFrom = (market, src) => {
     cases = defaultTaxCases(market);
     // Older saves had a single tax object: keep it as the active case.
     if (src.tax && typeof src.tax === 'object') cases[0] = { ...cases[0], tax: normalizeTax(market, src.tax) };
+  } else if ((src.seedVersion || 1) < SEED_VERSION) {
+    // Add cases seeded in newer versions that this save doesn't have yet.
+    const names = new Set(cases.map((c) => c.name));
+    for (const c of defaultTaxCases(market)) if (!names.has(c.name)) cases.push(c);
   }
   const active = cases.some((x) => x.id === src.activeTaxCase) ? src.activeTaxCase : cases[0].id;
-  return { taxCases: cases, activeTaxCase: active };
+  return { taxCases: cases, activeTaxCase: active, seedVersion: SEED_VERSION };
 };
 
 const sharedFields = (market, src = {}) => {
@@ -119,7 +123,7 @@ export const activeTax = (shared) => (shared.taxCases.find((x) => x.id === share
 
 // Full model input for one house: house fields + shared settings.
 export const inputsFor = (market, profile, shared) => {
-  const { taxCases, activeTaxCase, ...rest } = shared; // eslint-disable-line no-unused-vars
+  const { taxCases, activeTaxCase, seedVersion, ...rest } = shared; // eslint-disable-line no-unused-vars
   return { market, ...profile.inputs, ...rest, tax: activeTax(shared) };
 };
 

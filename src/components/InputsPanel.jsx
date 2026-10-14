@@ -130,6 +130,7 @@ export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash,
             <RateStepsEditor steps={p.tax.steps} base={p.tax} onChange={(v) => set('tax.steps', v)} t={t} />
             {f('tax.cgInclusion', { unit: '%', step: 1 })}
             {f('tax.retirement', { ...P, tip: t.retirementTip })}
+            {f('tax.saleOtherIncome', { ...big, tip: t.saleOtherIncomeTip })}
             <Toggle label={t.lossOffset} checked={p.tax.lossOffset} onChange={(v) => set('tax.lossOffset', v)} />
             <div className="col-span-2 border-t border-slate-100 pt-3 grid grid-cols-2 gap-x-3 gap-y-3">
               <Toggle label={t.claimCCA} checked={p.claimCCA} onChange={(v) => set('claimCCA', v)} />

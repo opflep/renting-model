@@ -53,7 +53,7 @@ describe('house profiles', () => {
 describe('tax cases', () => {
   it('seeds three Canadian cases and routes tax edits to the active one', () => {
     let s = initialState();
-    expect(s.shared.CA.taxCases.map((c) => c.name)).toEqual(['Top bracket throughout', 'Lower from year 5', 'Lower from year 10']);
+    expect(s.shared.CA.taxCases.map((c) => c.name)).toEqual(['Top bracket throughout', 'Lower from year 5', 'Lower from year 10', 'Semi-retire 2031']);
     const [a, b] = s.shared.CA.taxCases;
     s = actions.set('tax.marginal', 40)(s);
     expect(activeTax(s.shared.CA).marginal).toBe(40);
@@ -63,12 +63,12 @@ describe('tax cases', () => {
     expect(inputsFor('CA', activeProfile(s), s.shared.CA).tax.steps[0].from).toBe(5);
     expect(inputsFor('CA', activeProfile(s), s.shared.CA).taxCases).toBeUndefined();
     s = actions.taxAdd('Mine', { steps: [{ from: 3, marginal: 30, dividend: 10 }], ccaSteps: [{ from: 2, claim: false }] })(s);
-    expect(s.shared.CA.taxCases).toHaveLength(4);
+    expect(s.shared.CA.taxCases).toHaveLength(5);
     expect(activeTax(s.shared.CA).ccaSteps).toEqual([{ from: 2, claim: false }]);
     s = actions.taxRename(s.shared.CA.activeTaxCase, 'Renamed')(s);
     expect(s.shared.CA.taxCases.at(-1).name).toBe('Renamed');
     s = actions.taxRemove(s.shared.CA.activeTaxCase)(s);
-    expect(s.shared.CA.taxCases).toHaveLength(3);
+    expect(s.shared.CA.taxCases).toHaveLength(4);
     expect(s.shared.CA.activeTaxCase).toBe(a.id);
   });
 
@@ -78,5 +78,17 @@ describe('tax cases', () => {
     expect(tax.marginal).toBe(50);
     expect(tax.steps).toEqual([{ from: 7, marginal: 30, dividend: 12 }]);
     expect(tax.dropYear).toBeUndefined();
+  });
+});
+
+describe('seeded case migration', () => {
+  it('appends newly seeded cases to an older save without touching existing ones', () => {
+    const s = normalize({ shared: { CA: { seedVersion: 1, taxCases: [{ id: 'mine', name: 'Mine', tax: { marginal: 45 } }], activeTaxCase: 'mine' } } });
+    expect(s.shared.CA.taxCases[0]).toMatchObject({ id: 'mine', name: 'Mine' });
+    expect(s.shared.CA.taxCases.map((c) => c.name)).toContain('Semi-retire 2031');
+    expect(s.shared.CA.activeTaxCase).toBe('mine');
+    // Already up to date: nothing added.
+    const again = normalize(s);
+    expect(again.shared.CA.taxCases).toHaveLength(s.shared.CA.taxCases.length);
   });
 });

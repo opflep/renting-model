@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import { Card, CardHeader, ChartTooltip, Kpi, LegendRow } from './ui';
 import { INK, SERIES, axisProps } from '../lib/theme';
 import { tr } from '../lib/i18n';
+import { marginalAt } from '../lib/taxcases';
 import { ScenarioTable } from './Scenarios';
 import TaxPathCard from './TaxPathCard';
 import CcaCard from './CcaCard';
@@ -218,7 +219,11 @@ function ExitCard({ p, last, t, fmt }) {
     {
       label: t.exitCG,
       value: -last.capitalGainsTax,
-      note: isVN ? t.exitCGNoteVN : tr(t.exitCGNote, { inc: p.tax.cgInclusion, m: p.tax.marginal }),
+      note: isVN
+        ? t.exitCGNoteVN
+        : p.tax.saleOtherIncome > 0
+          ? tr(t.exitCGStacked, { inc: p.tax.cgInclusion, v: fmt.short(p.tax.saleOtherIncome) })
+          : tr(t.exitCGNote, { inc: p.tax.cgInclusion, m: marginalAt(p.tax, last.year) }),
     },
   ];
   if (!isVN && p.claimCCA) lines.push({ label: t.exitRecapture, value: -last.recaptureTax });
