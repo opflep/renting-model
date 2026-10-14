@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Building2, ChevronDown, GitBranch, Landmark, LineChart, Percent, Receipt, RotateCcw, TrendingUp, Wallet, Home } from 'lucide-react';
 import { Card, Group, NumberField, Toggle } from './ui';
 import { ScenarioEditor, ScenarioSwitch } from './Scenarios';
+import { CcaStepsEditor, RateStepsEditor, TaxCaseBar } from './TaxCaseEditor';
 import { tr } from '../lib/i18n';
 
-export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash, stockScenario, onStockScenario }) {
+export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash, stockScenario, onStockScenario, taxCases, activeTaxCase, onTaxCase }) {
   const isVN = p.market === 'VN';
   // VN: price in tỷ, other money in triệu. CA: dollars.
   const big = isVN ? { scale: 1e9, unit: 'tỷ', step: 0.05 } : { unit: '$', step: 5000 };
@@ -114,16 +115,29 @@ export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash,
           </>
         ) : (
           <>
+            <TaxCaseBar
+              cases={taxCases}
+              activeId={activeTaxCase}
+              t={t}
+              onSelect={(id) => onTaxCase('select', id)}
+              onAdd={() => onTaxCase('add')}
+              onDuplicate={(c) => onTaxCase('duplicate', c)}
+              onRename={(id, name) => onTaxCase('rename', id, name)}
+              onRemove={(id) => onTaxCase('remove', id)}
+            />
             {f('tax.marginal', { ...P, tip: t.marginalTip })}
             {f('tax.dividend', { ...P, tip: t.dividendTip })}
+            <RateStepsEditor steps={p.tax.steps} base={p.tax} onChange={(v) => set('tax.steps', v)} t={t} />
             {f('tax.cgInclusion', { unit: '%', step: 1 })}
             {f('tax.retirement', { ...P, tip: t.retirementTip })}
-            {f('tax.dropYear', { unit: t.years, step: 1, tip: t.dropYearTip })}
-            {f('tax.laterMarginal', P)}
-            {f('tax.laterDividend', P)}
             <Toggle label={t.lossOffset} checked={p.tax.lossOffset} onChange={(v) => set('tax.lossOffset', v)} />
-            <Toggle label={t.claimCCA} checked={p.claimCCA} onChange={(v) => set('claimCCA', v)} />
-            {p.claimCCA && f('buildingPct', { unit: '%', step: 5 })}
+            <div className="col-span-2 border-t border-slate-100 pt-3 grid grid-cols-2 gap-x-3 gap-y-3">
+              <Toggle label={t.claimCCA} checked={p.claimCCA} onChange={(v) => set('claimCCA', v)} />
+              <p className="col-span-2 -mt-2 text-[10px] text-slate-400 leading-snug">{t.claimCCATip}</p>
+              {p.claimCCA && f('buildingPct', { unit: '%', step: 5 })}
+              {p.claimCCA && f('ccaRate', { unit: '%', step: 0.5 })}
+              <CcaStepsEditor steps={p.tax.ccaSteps} onChange={(v) => set('tax.ccaSteps', v)} t={t} />
+            </div>
           </>
         )}
       </Group>

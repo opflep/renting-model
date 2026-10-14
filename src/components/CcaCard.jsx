@@ -2,18 +2,19 @@ import { useMemo } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card, CardHeader, ChartTooltip, InfoTip, LegendRow } from './ui';
 import { INK, SERIES, axisProps } from '../lib/theme';
-import { TAX_PATHS, analyzeCcaPaths } from '../lib/store';
+import { analyzeCcaCases } from '../lib/store';
 import { tr } from '../lib/i18n';
 
 // What claiming CCA does to the rental's return under each tax path.
-export default function CcaCard({ p, scenario, stockScenario, t, fmt }) {
-  const grid = useMemo(() => analyzeCcaPaths(p, scenario, stockScenario), [p, scenario, stockScenario]);
+export default function CcaCard({ p, shared, scenario, stockScenario, t, fmt }) {
+  const cases = shared.taxCases;
+  const grid = useMemo(() => analyzeCcaCases(p, cases, scenario, stockScenario), [p, cases, scenario, stockScenario]);
   if (p.market !== 'CA') return null;
   const n = p.horizon;
 
-  const rows = TAX_PATHS.map((dropYear) => {
+  const rows = cases.map((c) => {
     const pick = (key) => {
-      const { rental, compare } = grid[dropYear][key];
+      const { rental, compare } = grid[c.id][key];
       const last = rental.rows[n - 1];
       return {
         irr: compare.rental.irr,
@@ -25,11 +26,11 @@ export default function CcaCard({ p, scenario, stockScenario, t, fmt }) {
       };
     };
     return {
-      dropYear,
-      label: dropYear ? tr(t.tpDrop, { y: dropYear }) : tr(t.tpNever, { n }),
+      id: c.id,
+      label: c.name,
       none: pick('none'),
       cca: pick('cca'),
-      active: (p.tax.dropYear || 0) === dropYear,
+      active: c.id === shared.activeTaxCase,
     };
   });
   const chart = rows.map((r) => ({ label: r.label, none: r.none.irr, cca: r.cca.irr }));
@@ -78,7 +79,7 @@ export default function CcaCard({ p, scenario, stockScenario, t, fmt }) {
                   const delta = r.cca.irr - r.none.irr;
                   return (
                     <tr
-                      key={`${r.dropYear}-${key}`}
+                      key={`${r.id}-${key}`}
                       className={`text-right [&>td]:px-2.5 [&>td]:py-1.5 [&>td]:whitespace-nowrap ${i === 0 ? 'border-t border-slate-100' : ''} ${r.active ? 'bg-blue-50/40' : ''}`}
                     >
                       <td className="text-left font-medium text-slate-800">{i === 0 ? r.label : ''}</td>

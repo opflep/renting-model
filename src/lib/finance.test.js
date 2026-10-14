@@ -118,39 +118,49 @@ describe('scenarios', () => {
 });
 
 describe('tax rate path', () => {
-  it('applies later rates from the drop year and favours the rental', async () => {
-    const { marginalAt } = await import('./finance');
-    const { analyzeTaxPaths } = await import('./store');
-    const tax = { ...DEFAULTS.CA.tax, dropYear: 5, laterMarginal: 35 };
+  it('applies step rates from their year and favours the rental', async () => {
+    const { marginalAt, ccaClaimAt } = await import('./finance');
+    const { analyzeTaxCases } = await import('./store');
+    const { newTaxCase } = await import('./taxcases');
+    const tax = { ...DEFAULTS.CA.tax, steps: [{ from: 5, marginal: 35, dividend: 18 }] };
     expect(marginalAt(tax, 4)).toBe(53.5);
     expect(marginalAt(tax, 5)).toBe(35);
-    expect(marginalAt({ ...tax, dropYear: 0 }, 20)).toBe(53.5);
+    expect(marginalAt({ ...tax, steps: [] }, 20)).toBe(53.5);
+    expect(ccaClaimAt({ ...tax, ccaSteps: [] }, 1)).toBe(true);
+    expect(ccaClaimAt({ ...tax, ccaSteps: [{ from: 1, claim: false }, { from: 4, claim: true }] }, 3)).toBe(false);
+    expect(ccaClaimAt({ ...tax, ccaSteps: [{ from: 1, claim: false }, { from: 4, claim: true }] }, 4)).toBe(true);
 
-    const paths = analyzeTaxPaths(DEFAULTS.CA);
-    const n = DEFAULTS.CA.horizon;
-    // Equal-cash comparison: rental wealth excludes top-ups, so judge by IRR.
-    const irr = (d) => paths[d].compare.rental.irr;
-    expect(irr(5)).toBeGreaterThan(irr(10));
-    expect(irr(10)).toBeGreaterThan(irr(0));
-    expect(paths[5].compare.rental.wealth[n]).toBeGreaterThanOrEqual(paths[0].compare.rental.wealth[n]);
-    // Year-1 numbers are unaffected by a later drop.
-    expect(paths[5].rental.rows[0].taxBill).toBeCloseTo(paths[0].rental.rows[0].taxBill, 6);
-    expect(paths[5].rental.rows[5].taxBill).toBeLessThan(paths[0].rental.rows[5].taxBill);
+    const cases = [newTaxCase('CA', 'same', {}), newTaxCase('CA', 'drop5', { steps: [{ from: 5, marginal: 35, dividend: 18 }] }), newTaxCase('CA', 'drop10', { steps: [{ from: 10, marginal: 35, dividend: 18 }] })];
+    const out = analyzeTaxCases(DEFAULTS.CA, cases);
+    const irr = (i) => out[cases[i].id].compare.rental.irr;
+    expect(irr(1)).toBeGreaterThan(irr(2));
+    expect(irr(2)).toBeGreaterThan(irr(0));
+    expect(out[cases[1].id].rental.rows[0].taxBill).toBeCloseTo(out[cases[0].id].rental.rows[0].taxBill, 6);
+    expect(out[cases[1].id].rental.rows[5].taxBill).toBeLessThan(out[cases[0].id].rental.rows[5].taxBill);
   });
 });
 
-describe('cca paths', () => {
-  it('CCA lowers yearly tax, adds recapture at sale and raises IRR', async () => {
-    const { analyzeCcaPaths } = await import('./store');
-    const g = analyzeCcaPaths({ ...DEFAULTS.CA, rent: 2800 });
-    for (const d of [0, 5, 10]) {
-      const none = g[d].none;
-      const cca = g[d].cca;
+describe('cca cases', () => {
+  it('CCA lowers yearly tax, adds recapture at sale, raises IRR, and follows the schedule', async () => {
+    const { analyzeCcaCases } = await import('./store');
+    const { newTaxCase } = await import('./taxcases');
+    const cases = [newTaxCase('CA', 'same', {}), newTaxCase('CA', 'drop5', { steps: [{ from: 5, marginal: 35, dividend: 18 }] })];
+    const g = analyzeCcaCases({ ...DEFAULTS.CA, rent: 2800 }, cases);
+    for (const c of cases) {
+      const none = g[c.id].none;
+      const cca = g[c.id].cca;
       expect(cca.rental.rows[0].taxBill).toBeLessThan(none.rental.rows[0].taxBill);
       expect(cca.rental.rows.at(-1).recaptureTax).toBeGreaterThan(0);
       expect(none.rental.rows.at(-1).recaptureTax).toBe(0);
       expect(cca.compare.rental.irr).toBeGreaterThan(none.compare.rental.irr);
     }
-    expect(g[5].cca.rental.rows.at(-1).recaptureTax).toBeLessThan(g[0].cca.rental.rows.at(-1).recaptureTax);
+    expect(g[cases[1].id].cca.rental.rows.at(-1).recaptureTax).toBeLessThan(g[cases[0].id].cca.rental.rows.at(-1).recaptureTax);
+
+    // CCA schedule: claim only from year 3.
+    const late = newTaxCase('CA', 'late', { ccaSteps: [{ from: 1, claim: false }, { from: 3, claim: true }] });
+    const r = analyzeCcaCases({ ...DEFAULTS.CA, rent: 2800 }, [late])[late.id].cca.rental.rows;
+    expect(r[0].cca).toBe(0);
+    expect(r[1].cca).toBe(0);
+    expect(r[2].cca).toBeGreaterThan(0);
   });
 });

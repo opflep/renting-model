@@ -2,35 +2,38 @@ import { useMemo } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card, CardHeader, ChartTooltip, LegendRow } from './ui';
 import { INK, SERIES, axisProps } from '../lib/theme';
-import { TAX_PATHS, analyzeTaxPaths } from '../lib/store';
+import { analyzeTaxCases } from '../lib/store';
+import { describeTax } from '../lib/taxcases';
 import { tr } from '../lib/i18n';
 
 // After-tax outcome of one house vs the best stock option under three
 // marginal-rate paths: unchanged, drop in year 5, drop in year 10.
-export default function TaxPathCard({ p, scenario, stockScenario, t, fmt }) {
-  const paths = useMemo(() => analyzeTaxPaths(p, scenario, stockScenario), [p, scenario, stockScenario]);
+export default function TaxPathCard({ p, shared, scenario, stockScenario, t, fmt }) {
+  const cases = shared.taxCases;
+  const paths = useMemo(() => analyzeTaxCases(p, cases, scenario, stockScenario), [p, cases, scenario, stockScenario]);
   if (p.market !== 'CA') return null;
   const n = p.horizon;
 
-  const rows = TAX_PATHS.map((dropYear) => {
-    const { compare } = paths[dropYear];
+  const rows = cases.map((c) => {
+    const { compare } = paths[c.id];
     const [bestKind, best] = Object.entries(compare.accounts).reduce((a, b) => (b[1].values[n] > a[1].values[n] ? b : a));
     return {
-      dropYear,
-      label: dropYear ? tr(t.tpDrop, { y: dropYear }) : tr(t.tpNever, { n }),
+      id: c.id,
+      label: c.name,
+      desc: describeTax(c.tax, t),
       cashIn: compare.totalContributed,
       rental: compare.rental.wealth[n],
       rentalIrr: compare.rental.irr,
       stock: best.values[n],
       stockIrr: best.irr,
       stockKind: t[`o_${bestKind}`],
-      active: dropYear === (p.tax.dropYear || 0) || (dropYear === 0 && !p.tax.dropYear),
+      active: c.id === shared.activeTaxCase,
     };
   });
 
   return (
     <Card className="p-5">
-      <CardHeader title={t.tpTitle} subtitle={tr(t.tpSub, { m: p.tax.laterMarginal, d: p.tax.laterDividend, n })} />
+      <CardHeader title={t.tcCardTitle} subtitle={tr(t.tcCardSub, { n })} />
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
         <div className="xl:col-span-2 h-56">
           <LegendRow items={[{ label: t.tpRental, color: SERIES[0] }, { label: t.tpStock, color: SERIES[1] }]} />
@@ -62,8 +65,11 @@ export default function TaxPathCard({ p, scenario, stockScenario, t, fmt }) {
               {rows.map((r) => {
                 const gap = r.rental - r.stock;
                 return (
-                  <tr key={r.dropYear} className={`text-right [&>td]:px-3 [&>td]:py-2 [&>td]:whitespace-nowrap ${r.active ? 'bg-blue-50/40' : ''}`}>
-                    <td className="text-left font-medium text-slate-800">{r.label}</td>
+                  <tr key={r.id} className={`text-right [&>td]:px-3 [&>td]:py-2 [&>td]:whitespace-nowrap ${r.active ? 'bg-blue-50/40' : ''}`}>
+                    <td className="text-left font-medium text-slate-800">
+                      {r.label}
+                      <span className="block text-[10px] font-normal text-slate-400">{r.desc}</span>
+                    </td>
                     <td className="text-slate-500">{fmt.short(r.cashIn)}</td>
                     <td className="font-semibold text-slate-900">{fmt.short(r.rental)}</td>
                     <td>{fmt.pct(r.rentalIrr)}</td>
@@ -78,7 +84,7 @@ export default function TaxPathCard({ p, scenario, stockScenario, t, fmt }) {
               })}
             </tbody>
           </table>
-          <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">{t.tpNote}</p>
+          <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">{t.tcCardNote}</p>
         </div>
       </div>
     </Card>

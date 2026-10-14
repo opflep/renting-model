@@ -3,6 +3,7 @@
 import { DEFAULTS } from './defaults';
 import { compareRentalVsStocks, projectRental, simulateCashDamming } from './finance';
 import { SCENARIOS, applyScenario } from './scenarios';
+import { defaultTaxCases, newTaxCase, normalizeTax } from './taxcases';
 
 export const STORAGE_KEY = 'renting-model:v3';
 const SHARED_KEYS = ['tax', 'stocks', 'damming', 'scenarios'];
@@ -18,10 +19,23 @@ const houseFields = (market, src = DEFAULTS[market]) => {
   return out;
 };
 
+// Tax lives in named cases; `activeTaxCase` picks the one every tab uses.
+const taxCasesFrom = (market, src) => {
+  const list = Array.isArray(src.taxCases) ? src.taxCases.filter((x) => x && typeof x === 'object') : [];
+  let cases = list.map((x) => ({ id: String(x.id || uid()), name: String(x.name || 'Case').slice(0, 60), tax: normalizeTax(market, x.tax || {}) }));
+  if (!cases.length) {
+    cases = defaultTaxCases(market);
+    // Older saves had a single tax object: keep it as the active case.
+    if (src.tax && typeof src.tax === 'object') cases[0] = { ...cases[0], tax: normalizeTax(market, src.tax) };
+  }
+  const active = cases.some((x) => x.id === src.activeTaxCase) ? src.activeTaxCase : cases[0].id;
+  return { taxCases: cases, activeTaxCase: active };
+};
+
 const sharedFields = (market, src = {}) => {
   const d = DEFAULTS[market];
   return {
-    tax: { ...d.tax, ...src.tax },
+    ...taxCasesFrom(market, src),
     stocks: { ...d.stocks, ...src.stocks },
     damming: d.damming && { ...d.damming, ...src.damming },
     scenarios: {
@@ -101,20 +115,32 @@ export function saveState(state) {
 
 export const activeProfile = (s) => s.profiles[s.market].find((x) => x.id === s.active[s.market]);
 
+export const activeTax = (shared) => (shared.taxCases.find((x) => x.id === shared.activeTaxCase) || shared.taxCases[0]).tax;
+
 // Full model input for one house: house fields + shared settings.
-export const inputsFor = (market, profile, shared) => ({ market, ...profile.inputs, ...shared });
+export const inputsFor = (market, profile, shared) => {
+  const { taxCases, activeTaxCase, ...rest } = shared; // eslint-disable-line no-unused-vars
+  return { market, ...profile.inputs, ...rest, tax: activeTax(shared) };
+};
 
 const setPath = (obj, path, value) => {
   const [head, ...rest] = path.split('.');
   return { ...obj, [head]: rest.length ? setPath(obj[head], rest.join('.'), value) : value };
 };
 
+const mapShared = (s, fn) => ({ ...s, shared: { ...s.shared, [s.market]: fn(s.shared[s.market]) } });
 const mapProfiles = (s, fn) => ({ ...s, profiles: { ...s.profiles, [s.market]: fn(s.profiles[s.market]) } });
 
 export const actions = {
   set: (path, value) => (s) => {
     const m = s.market;
-    if (SHARED_KEYS.includes(path.split('.')[0])) {
+    const head = path.split('.')[0];
+    if (head === 'tax') {
+      const sh = s.shared[m];
+      const taxCases = sh.taxCases.map((c) => (c.id === sh.activeTaxCase ? { ...c, tax: setPath(c, path, value).tax } : c));
+      return { ...s, shared: { ...s.shared, [m]: { ...sh, taxCases } } };
+    }
+    if (SHARED_KEYS.includes(head)) {
       return { ...s, shared: { ...s.shared, [m]: setPath(s.shared[m], path, value) } };
     }
     return mapProfiles(s, (list) => list.map((x) => (x.id === s.active[m] ? { ...x, inputs: setPath(x.inputs, path, value) } : x)));
@@ -122,6 +148,22 @@ export const actions = {
   resetHouse: () => (s) =>
     mapProfiles(s, (list) => list.map((x) => (x.id === s.active[s.market] ? { ...x, inputs: houseFields(s.market) } : x))),
   resetShared: () => (s) => ({ ...s, shared: { ...s.shared, [s.market]: sharedFields(s.market) } }),
+
+  // --- tax cases ---------------------------------------------------------
+  taxSelect: (id) => (s) => mapShared(s, (sh) => ({ ...sh, activeTaxCase: id })),
+  taxAdd: (name, tax) => (s) =>
+    mapShared(s, (sh) => {
+      const c = newTaxCase(s.market, name, tax || {});
+      return { ...sh, taxCases: [...sh.taxCases, c], activeTaxCase: c.id };
+    }),
+  taxRename: (id, name) => (s) => mapShared(s, (sh) => ({ ...sh, taxCases: sh.taxCases.map((c) => (c.id === id ? { ...c, name: String(name).slice(0, 60) } : c)) })),
+  taxRemove: (id) => (s) =>
+    mapShared(s, (sh) => {
+      if (sh.taxCases.length <= 1) return sh;
+      const taxCases = sh.taxCases.filter((c) => c.id !== id);
+      return { ...sh, taxCases, activeTaxCase: sh.activeTaxCase === id ? taxCases[0].id : sh.activeTaxCase };
+    }),
+  taxResetCase: () => (s) => mapShared(s, (sh) => ({ ...sh, taxCases: sh.taxCases.map((c) => (c.id === sh.activeTaxCase ? { ...c, tax: normalizeTax(s.market, {}) } : c)) })),
   select: (id) => (s) => ({ ...s, active: { ...s.active, [s.market]: id } }),
   add: (name, fromInputs) => (s) => {
     const p = newProfile(s.market, name, fromInputs);
@@ -230,20 +272,15 @@ export const analyzeAll = (p, stockScenario = 'base') =>
 export const analyzeGrid = (p) =>
   Object.fromEntries(SCENARIOS.map((r) => [r, Object.fromEntries(SCENARIOS.map((s) => [s, analyze(p, r, s)]))]));
 
-// The same house under three tax-rate paths: rates never change, or step
-// down to the "later" rates from year 5 or year 10. Uses the selected
-// scenarios so the card agrees with the rest of the tab.
-export const TAX_PATHS = [0, 5, 10];
-export const analyzeTaxPaths = (p, rentalScenario = 'base', stockScenario = 'base') =>
-  Object.fromEntries(TAX_PATHS.map((dropYear) => [dropYear, analyze({ ...p, tax: { ...p.tax, dropYear } }, rentalScenario, stockScenario)]));
+// The same house under every saved tax case: { [caseId]: analysis }.
+export const analyzeTaxCases = (p, taxCases, rentalScenario = 'base', stockScenario = 'base') =>
+  Object.fromEntries(taxCases.map((c) => [c.id, analyze({ ...p, tax: c.tax }, rentalScenario, stockScenario)]));
 
-// CCA on vs off under each tax path. grid[dropYear][claimCCA ? 'cca' : 'none'].
-export const analyzeCcaPaths = (p, rentalScenario = 'base', stockScenario = 'base') =>
+// CCA on vs off under each saved tax case: grid[caseId][claimCCA ? 'cca' : 'none'].
+export const analyzeCcaCases = (p, taxCases, rentalScenario = 'base', stockScenario = 'base') =>
   Object.fromEntries(
-    TAX_PATHS.map((dropYear) => [
-      dropYear,
-      Object.fromEntries(
-        [false, true].map((claimCCA) => [claimCCA ? 'cca' : 'none', analyze({ ...p, claimCCA, tax: { ...p.tax, dropYear } }, rentalScenario, stockScenario)])
-      ),
+    taxCases.map((c) => [
+      c.id,
+      Object.fromEntries([false, true].map((claimCCA) => [claimCCA ? 'cca' : 'none', analyze({ ...p, claimCCA, tax: c.tax }, rentalScenario, stockScenario)])),
     ])
   );

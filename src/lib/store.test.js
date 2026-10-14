@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { actions, activeProfile, initialState, inputsFor, mergeImport, normalize } from './store';
+import { actions, activeProfile, activeTax, initialState, inputsFor, mergeImport, normalize } from './store';
 
 describe('house profiles', () => {
   it('starts with one house per market', () => {
@@ -47,5 +47,36 @@ describe('house profiles', () => {
     expect(merged.profiles.CA).toHaveLength(2);
     expect(new Set(merged.profiles.CA.map((x) => x.id)).size).toBe(2);
     expect(() => mergeImport(s, { nope: 1 })).toThrow();
+  });
+});
+
+describe('tax cases', () => {
+  it('seeds three Canadian cases and routes tax edits to the active one', () => {
+    let s = initialState();
+    expect(s.shared.CA.taxCases.map((c) => c.name)).toEqual(['Top bracket throughout', 'Lower from year 5', 'Lower from year 10']);
+    const [a, b] = s.shared.CA.taxCases;
+    s = actions.set('tax.marginal', 40)(s);
+    expect(activeTax(s.shared.CA).marginal).toBe(40);
+    s = actions.taxSelect(b.id)(s);
+    expect(activeTax(s.shared.CA).marginal).toBe(53.5);
+    expect(activeTax(s.shared.CA).steps).toEqual([{ from: 5, marginal: 35, dividend: 18 }]);
+    expect(inputsFor('CA', activeProfile(s), s.shared.CA).tax.steps[0].from).toBe(5);
+    expect(inputsFor('CA', activeProfile(s), s.shared.CA).taxCases).toBeUndefined();
+    s = actions.taxAdd('Mine', { steps: [{ from: 3, marginal: 30, dividend: 10 }], ccaSteps: [{ from: 2, claim: false }] })(s);
+    expect(s.shared.CA.taxCases).toHaveLength(4);
+    expect(activeTax(s.shared.CA).ccaSteps).toEqual([{ from: 2, claim: false }]);
+    s = actions.taxRename(s.shared.CA.activeTaxCase, 'Renamed')(s);
+    expect(s.shared.CA.taxCases.at(-1).name).toBe('Renamed');
+    s = actions.taxRemove(s.shared.CA.activeTaxCase)(s);
+    expect(s.shared.CA.taxCases).toHaveLength(3);
+    expect(s.shared.CA.activeTaxCase).toBe(a.id);
+  });
+
+  it('migrates an old single tax object with dropYear into a case with a step', () => {
+    const s = normalize({ shared: { CA: { tax: { marginal: 50, dropYear: 7, laterMarginal: 30, laterDividend: 12 } } } });
+    const tax = activeTax(s.shared.CA);
+    expect(tax.marginal).toBe(50);
+    expect(tax.steps).toEqual([{ from: 7, marginal: 30, dividend: 12 }]);
+    expect(tax.dropYear).toBeUndefined();
   });
 });

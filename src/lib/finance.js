@@ -2,6 +2,8 @@
 // All amounts are in the market's base currency unit ($1 or 1 VND).
 // Rates are passed as percentages (e.g. 4.5 for 4.5%) unless noted.
 
+import { ccaClaimAt, dividendAt, marginalAt } from './taxcases';
+
 const pct = (v) => (Number(v) || 0) / 100;
 
 // ---------------------------------------------------------------------------
@@ -33,10 +35,8 @@ export function monthlyPayment(principal, annualPct, years, compounding = 'month
 // (employment etc.) so it produces a refund when `lossOffset` is on.
 // Vietnam: individuals renting out property pay 5% VAT + 5% PIT on GROSS rent
 // when annual rent exceeds 100M VND. Expenses and interest are not deductible.
-// Tax rates can step down from a given year (e.g. lower income later in
-// life). `dropYear` 0 means the rates never change. Year 1 is the first year.
-export const marginalAt = (tax, year) => (tax.dropYear > 0 && year >= tax.dropYear ? tax.laterMarginal : tax.marginal);
-export const dividendAt = (tax, year) => (tax.dropYear > 0 && year >= tax.dropYear ? tax.laterDividend : tax.dividend);
+// Tax rates and the CCA decision can change year by year; see taxcases.js.
+export { marginalAt, dividendAt, ccaClaimAt };
 
 export function rentalIncomeTax({ market, grossRent, netIncome, tax, year = 1 }) {
   if (market === 'VN') {
@@ -92,7 +92,7 @@ export function projectRental(p) {
 
     const netBeforeCCA = grossRent - opex - interest;
     let cca = 0;
-    if (!isVN && p.claimCCA) {
+    if (!isVN && p.claimCCA && ccaClaimAt(p.tax, year)) {
       const maxClaim = ucc * pct(p.ccaRate) * (year === 1 ? 0.5 : 1);
       cca = Math.max(0, Math.min(maxClaim, netBeforeCCA));
       ucc -= cca;

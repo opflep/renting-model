@@ -36,6 +36,14 @@ export default function App() {
 
   const go = (patch) => setState((s) => ({ ...s, ...patch }));
 
+  const taxCaseAction = (kind, a, b) => {
+    if (kind === 'select') setState(actions.taxSelect(a));
+    if (kind === 'add') setState(actions.taxAdd(tr(t.tcDefaultName, { n: shared.taxCases.length + 1 })));
+    if (kind === 'duplicate') setState(actions.taxAdd(tr(t.tcCopyName, { name: a.name }), a.tax));
+    if (kind === 'rename') setState(actions.taxRename(a, b));
+    if (kind === 'remove') setState(actions.taxRemove(a));
+  };
+
   // --- Google Sheets ---------------------------------------------------------
   const [sheetsOpen, setSheetsOpen] = useState(false);
   const [syncing, setSyncing] = useState(null);
@@ -221,18 +229,22 @@ export default function App() {
               initialCash={rental.initialCash}
               stockScenario={stockScenario}
               onStockScenario={(v) => go({ stockScenario: v })}
+              taxCases={shared.taxCases}
+              activeTaxCase={shared.activeTaxCase}
+              onTaxCase={taxCaseAction}
             />
           </aside>
         )}
         <div className="min-w-0">
           <ScenarioBanner rental={scenario} stocks={stockScenario} scenarios={shared.scenarios} t={t} />
-          {tab === 'rental' && <RentalTab p={safe} rental={rental} compare={compare} all={all} scenario={scenario} stockScenario={stockScenario} t={t} fmt={fmt} />}
+          {tab === 'rental' && <RentalTab p={safe} rental={rental} compare={compare} all={all} scenario={scenario} stockScenario={stockScenario} shared={shared} t={t} fmt={fmt} />}
           {tab === 'compare' && (
             <CompareTab
               p={safe}
               rental={rental}
               compare={compare}
               grid={grid}
+              shared={shared}
               scenario={scenario}
               stockScenario={stockScenario}
               onPickScenario={(r, s) => go({ scenario: r, stockScenario: s })}

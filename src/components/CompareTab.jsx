@@ -9,7 +9,7 @@ import TaxPathCard from './TaxPathCard';
 // Fixed color per option (follows the entity, not its rank).
 const COLOR = { rental: SERIES[0], nonreg: SERIES[1], vnstock: SERIES[1], tfsa: SERIES[2], rrsp: SERIES[3], deposit: SERIES[4] };
 
-export default function CompareTab({ p, rental, compare, grid, scenario, stockScenario, onPickScenario, t, fmt }) {
+export default function CompareTab({ p, rental, compare, grid, shared, scenario, stockScenario, onPickScenario, t, fmt }) {
   const n = p.horizon;
   const isVN = p.market === 'VN';
   const kinds = Object.keys(compare.accounts);
@@ -101,7 +101,7 @@ export default function CompareTab({ p, rental, compare, grid, scenario, stockSc
 
       {grid && <ScenarioGrid grid={grid} rental={scenario} stocks={stockScenario} onPick={onPickScenario} t={t} fmt={fmt} horizon={n} />}
 
-      <TaxPathCard p={p} scenario={scenario} stockScenario={stockScenario} t={t} fmt={fmt} />
+      <TaxPathCard p={p} shared={shared} scenario={scenario} stockScenario={stockScenario} t={t} fmt={fmt} />
 
       <div>
         <h3 className="text-[15px] font-semibold text-slate-900 mb-3">{t.taxHow}</h3>
