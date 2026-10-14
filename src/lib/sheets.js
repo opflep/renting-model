@@ -151,11 +151,104 @@ export async function fetchSheet(id) {
 }
 
 // Returns [{ tab, market, inputs, matched, unknown }] for tabs that look like houses.
+// ---------------------------------------------------------------------------
+// Tax cases tab
+// ---------------------------------------------------------------------------
+// A tab named "Tax cases" (or "Kịch bản thuế") holds one case per row with a
+// header row. Columns are matched by header, loosely, like house labels:
+//   Name | Market | Marginal % | Dividend % | CG inclusion % | RRSP withdrawal % |
+//   Loss offset | Rate steps | CCA steps | Other income in sale year
+// Rate steps:  "5: 38.5/18; 12: 30/10"   (from year: marginal/dividend)
+// CCA steps:   "1: no; 3: yes"            (from year: claim)
+
+export const TAX_TAB = /^(tax cases?|tax|thue|kich ban thue)$/;
+const TAX_COLS = {
+  name: ['name', 'case', 'tax case', 'ten', 'kich ban'],
+  market: ['market', 'country', 'thi truong'],
+  marginal: ['marginal', 'marginal rate', 'marginal tax rate', 'thue suat bien'],
+  dividend: ['dividend', 'dividend rate', 'eligible dividend rate', 'thue co tuc'],
+  cgInclusion: ['cg inclusion', 'capital gains inclusion', 'inclusion'],
+  retirement: ['rrsp withdrawal', 'rrsp withdrawal rate', 'retirement rate', 'retirement'],
+  lossOffset: ['loss offset', 'rental losses reduce other income', 'losses offset'],
+  steps: ['rate steps', 'rate changes', 'steps', 'thay doi thue suat'],
+  ccaSteps: ['cca steps', 'cca', 'cca by year', 'cca theo nam'],
+  saleOtherIncome: ['other income in sale year', 'sale year income', 'sale income', 'thu nhap khac nam ban'],
+};
+const TAX_LOOKUP = new Map();
+for (const [key, aliases] of Object.entries(TAX_COLS)) for (const a of aliases) TAX_LOOKUP.set(normLabel(a), key);
+
+// "5: 38.5/18; 12: 30/10" -> [{from:5, marginal:38.5, dividend:18}, ...]
+export function parseRateSteps(text) {
+  const out = [];
+  for (const part of String(text ?? '').split(/[;\n]/)) {
+    const m = part.match(/(\d+)\s*[:=]\s*([\d.,]+)\s*%?\s*(?:[/,]\s*([\d.,]+)\s*%?)?/);
+    if (!m) continue;
+    const marginal = parseFloat(m[2].replace(',', '.'));
+    const dividend = m[3] != null ? parseFloat(m[3].replace(',', '.')) : NaN;
+    if (!Number.isFinite(marginal)) continue;
+    out.push({ from: Number(m[1]), marginal, dividend: Number.isFinite(dividend) ? dividend : Math.max(0, Math.round(marginal * 0.47 * 10) / 10) });
+  }
+  return out;
+}
+
+// "1: no; 3: yes" -> [{from:1, claim:false}, {from:3, claim:true}]
+export function parseCcaSteps(text) {
+  const out = [];
+  for (const part of String(text ?? '').split(/[;\n]/)) {
+    const m = part.match(/(\d+)\s*[:=]\s*([a-zA-Zà-ỹ]+)/);
+    if (!m) continue;
+    const v = normLabel(m[2]);
+    const claim = ['yes', 'y', 'true', 'claim', 'co'].includes(v) ? true : ['no', 'n', 'false', 'khong'].includes(v) ? false : null;
+    if (claim !== null) out.push({ from: Number(m[1]), claim });
+  }
+  return out;
+}
+
+export function parseTaxRows(rows, fallbackMarket) {
+  const header = rows.find((r) => r.some((c) => TAX_LOOKUP.get(normLabel(c)) === 'name'));
+  if (!header) return [];
+  const cols = header.map((c) => TAX_LOOKUP.get(normLabel(c)) ?? null);
+  const cases = [];
+  for (const row of rows.slice(rows.indexOf(header) + 1)) {
+    const get = (key) => {
+      const i = cols.indexOf(key);
+      return i >= 0 ? row[i] : undefined;
+    };
+    const name = String(get('name') ?? '').trim();
+    if (!name) continue;
+    // A name alone (a note, a divider) isn't a case.
+    const hasData = cols.some((k, i) => k && k !== 'name' && row[i] !== '' && row[i] != null);
+    if (!hasData) continue;
+    const tax = {};
+    for (const k of ['marginal', 'dividend', 'cgInclusion', 'retirement']) {
+      const v = parseValue('rate', get(k));
+      if (v !== undefined) tax[k] = v;
+    }
+    const income = parseValue('price', get('saleOtherIncome'));
+    if (income !== undefined) tax.saleOtherIncome = income;
+    const lo = parseValue('claimCCA', get('lossOffset'));
+    if (lo !== undefined) tax.lossOffset = lo;
+    tax.steps = parseRateSteps(get('steps'));
+    tax.ccaSteps = parseCcaSteps(get('ccaSteps'));
+    const market = parseValue('market', get('market')) || fallbackMarket;
+    cases.push({ name: name.slice(0, 60), market, tax });
+  }
+  return cases;
+}
+
 export async function parseWorkbook(buffer, fallbackMarket) {
   const XLSX = await loadXLSX();
   const wb = XLSX.read(buffer, { type: 'array' });
   const houses = [];
+  const taxCases = [];
   for (const tab of wb.SheetNames) {
+    if (TAX_TAB.test(normLabel(tab))) {
+      const ws = wb.Sheets[tab];
+      if (!ws || !ws['!ref']) continue;
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+      taxCases.push(...parseTaxRows(rows, fallbackMarket));
+      continue;
+    }
     if (/^[_#]|^(readme|instructions|huong dan|hướng dẫn)$/i.test(tab.trim())) continue;
     const ws = wb.Sheets[tab];
     if (!ws || !ws['!ref']) continue;
@@ -169,8 +262,17 @@ export async function parseWorkbook(buffer, fallbackMarket) {
     const house = parseHouseRows(rows, fallbackMarket);
     if (house.matched >= 2) houses.push({ tab: tab.trim(), ...house });
   }
-  return houses;
+  return { houses, taxCases };
 }
+
+const TAX_TEMPLATE_ROWS = [
+  ['Name', 'Market', 'Marginal %', 'Dividend %', 'CG inclusion %', 'RRSP withdrawal %', 'Loss offset', 'Rate steps', 'CCA steps', 'Other income in sale year'],
+  ['Top bracket throughout', 'CA', 53.5, 36.54, 50, 30, 'Yes', '', '', 0],
+  ['Lower from year 5', 'CA', 53.5, 36.54, 50, 30, 'Yes', '5: 35/18', '', 0],
+  ['Lower from year 10', 'CA', 53.5, 36.54, 50, 30, 'Yes', '10: 35/18', '', 0],
+  ['Semi-retire 2031', 'CA', 53.5, 36.54, 50, 30, 'Yes', '5: 38.5/18; 12: 30/10', '', 130000],
+  ['Semi-retire, CCA from yr 3', 'CA', 53.5, 36.54, 50, 30, 'Yes', '5: 38.5/18; 12: 30/10', '1: no; 3: yes', 130000],
+];
 
 const TEMPLATE_ROWS = (m) => {
   const d = DEFAULTS[m];
@@ -211,6 +313,7 @@ export function buildTemplate(XLSX, market) {
     ['Each tab is one house; the tab name becomes the house name.'],
     ['Column A = field label, column B = value. Rows you leave out use the app defaults.'],
     ['Tabs named README or starting with _ or # are ignored.'],
+    ['A tab named "Tax cases" holds one tax case per row (see its header row).'],
     [''],
     ['To link: upload to Google Drive, open with Google Sheets,'],
     ['Share → General access → "Anyone with the link" (Viewer), then paste the link into the app.'],
@@ -227,5 +330,10 @@ export function buildTemplate(XLSX, market) {
     ws['!cols'] = [{ wch: 24 }, { wch: 16 }, { wch: 28 }];
     XLSX.utils.book_append_sheet(wb, ws, name);
   });
+  if (market === 'CA') {
+    const ws = XLSX.utils.aoa_to_sheet(TAX_TEMPLATE_ROWS);
+    ws['!cols'] = [{ wch: 26 }, { wch: 8 }, { wch: 11 }, { wch: 11 }, { wch: 14 }, { wch: 16 }, { wch: 11 }, { wch: 24 }, { wch: 16 }, { wch: 22 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Tax cases');
+  }
   return wb;
 }

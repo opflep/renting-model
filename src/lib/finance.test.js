@@ -183,3 +183,21 @@ describe('sale-year bracket stacking', () => {
     expect(stacked.capitalGainsTax + stacked.recaptureTax).toBeGreaterThan(flat.capitalGainsTax + flat.recaptureTax);
   });
 });
+
+describe('cca optimizer', () => {
+  it('finds a claim window that beats both none and all-years and respects the schedule', async () => {
+    const { bestCcaWindow, windowSteps } = await import('./ccaOptimizer');
+    const { newTaxCase } = await import('./taxcases');
+    expect(windowSteps(3, 8, 25)).toEqual([{ from: 1, claim: false }, { from: 3, claim: true }, { from: 9, claim: false }]);
+    expect(windowSteps(1, 25, 25)).toEqual([{ from: 1, claim: true }]);
+    const p = { ...DEFAULTS.CA, rent: 2800, horizon: 15 };
+    const semi = newTaxCase('CA', 'semi', { steps: [{ from: 5, marginal: 38.5, dividend: 18 }, { from: 12, marginal: 30, dividend: 10 }], saleOtherIncome: 130000 });
+    const r = bestCcaWindow(p, semi.tax);
+    expect(r.best.irr).toBeGreaterThanOrEqual(r.none.irr);
+    expect(r.best.irr).toBeGreaterThanOrEqual(r.all.irr);
+    // With a flat top rate the deferral alone makes every year worth claiming.
+    const flat = bestCcaWindow(p, newTaxCase('CA', 'flat', {}).tax);
+    expect(flat.best.from).toBe(1);
+    expect(flat.best.to).toBe(15);
+  });
+});

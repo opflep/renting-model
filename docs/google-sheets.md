@@ -107,6 +107,25 @@ Percent fields always mean "percent", so write `20` or `20%` for twenty percent,
 
 Add a `Market` row (`CA` or `VN`) to each house. Houses without one use the market that was selected when you first linked the sheet. Canadian houses use dollars and Canadian tax rules; Vietnamese houses use VND and the Vietnamese rules. Switch market at the top right of the app to see each group.
 
+## Tax cases tab
+
+Add a tab named **Tax cases** to keep your tax cases in the sheet too. One row per case, with a header row. Columns are matched by name:
+
+| Column | Meaning | Example |
+|---|---|---|
+| Name | Case name (becomes the case in the app) | `Semi-retire 2031` |
+| Market | `CA` or `VN` | `CA` |
+| Marginal % | Year-1 marginal rate | `53.5` |
+| Dividend % | Year-1 eligible dividend rate | `36.54` |
+| CG inclusion % | Capital-gains inclusion | `50` |
+| RRSP withdrawal % | Rate on RRSP withdrawals | `30` |
+| Loss offset | Rental losses reduce other income | `Yes` |
+| Rate steps | Rate changes by year: `from year: marginal/dividend`, separated by `;` | `5: 38.5/18; 12: 30/10` |
+| CCA steps | CCA on/off by year: `from year: yes` or `no` | `1: no; 3: yes` |
+| Other income in sale year | If set, the sale is stacked on this income using BC brackets | `130000` |
+
+Blank cells use the app defaults. Cases sync like houses: matched by name, the sheet wins, a deleted row leaves an unlinked copy in the app. The tab name must be exactly `Tax cases` (or `Kịch bản thuế`).
+
 ## What is not in the sheet
 
 Settings that describe **you** rather than a property live in the app and apply to every house in that market:
@@ -114,6 +133,7 @@ Settings that describe **you** rather than a property live in the app and apply 
 - **Tax:** marginal rate, dividend rate, capital-gains inclusion, RRSP withdrawal rate, whether rental losses offset other income (Canada); rental and transfer tax rates (Vietnam).
 - **Stock market:** expected return, dividend yield, fees, savings rate, TFSA and RRSP room.
 - **Scenarios:** the bear and bull shifts (in percentage points) applied on top of every house's numbers. Put your *base case* in the sheet; the app derives bear and bull from it.
+- **Tax** can live in the sheet via the `Tax cases` tab (above); everything else in this list stays in the app.
 - **Home & HELOC** for cash damming: your home's value, mortgage, HELOC rate and limits.
 
 Set these once in the app's left panel (they're marked **all houses**).

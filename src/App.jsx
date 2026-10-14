@@ -60,11 +60,11 @@ export default function App() {
     setSyncing(isNew ? 'new' : id);
     try {
       const fallback = stateRef.current.sources[id]?.market || stateRef.current.market;
-      const houses = await parseWorkbook(await fetchSheet(id), fallback);
-      if (!houses.length) throw new Error(t.shNoHouses);
-      setState(actions.applySheet(id, url, houses));
+      const { houses, taxCases } = await parseWorkbook(await fetchSheet(id), fallback);
+      if (!houses.length && !taxCases.length) throw new Error(t.shNoHouses);
+      setState(actions.applySheet(id, url, houses, taxCases));
       setSyncErrors((e) => ({ ...e, [id]: null }));
-      if (!quiet) setNotice(tr(t.shAdded, { n: houses.length }));
+      if (!quiet) setNotice(tr(t.shAdded, { n: houses.length, c: taxCases.length }));
       return null;
     } catch (e) {
       const msg = e.message === t.shNoHouses ? t.shNoHouses : sheetError(e);
@@ -77,11 +77,11 @@ export default function App() {
 
   const importXlsxFile = async (file) => {
     try {
-      const houses = await parseWorkbook(await file.arrayBuffer(), market);
-      if (!houses.length) return t.shNoHouses;
+      const { houses, taxCases } = await parseWorkbook(await file.arrayBuffer(), market);
+      if (!houses.length && !taxCases.length) return t.shNoHouses;
       const tmp = `file:${Date.now()}`;
-      setState((s) => actions.unlinkSheet(tmp)(actions.applySheet(tmp, '', houses)(s)));
-      setNotice(tr(t.shImported, { n: houses.length }));
+      setState((s) => actions.unlinkSheet(tmp)(actions.applySheet(tmp, '', houses, taxCases)(s)));
+      setNotice(tr(t.shImported, { n: houses.length, c: taxCases.length }));
       return null;
     } catch (e) {
       return tr(t.shSyncFailed, { v: e.message });
@@ -237,7 +237,7 @@ export default function App() {
         )}
         <div className="min-w-0">
           <ScenarioBanner rental={scenario} stocks={stockScenario} scenarios={shared.scenarios} t={t} />
-          {tab === 'rental' && <RentalTab p={safe} rental={rental} compare={compare} all={all} scenario={scenario} stockScenario={stockScenario} shared={shared} t={t} fmt={fmt} />}
+          {tab === 'rental' && <RentalTab p={safe} rental={rental} compare={compare} all={all} scenario={scenario} stockScenario={stockScenario} shared={shared} onApplyCca={(id, steps) => setState(actions.taxSetCca(id, steps))} t={t} fmt={fmt} />}
           {tab === 'compare' && (
             <CompareTab
               p={safe}

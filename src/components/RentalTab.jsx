@@ -9,7 +9,7 @@ import { ScenarioTable } from './Scenarios';
 import TaxPathCard from './TaxPathCard';
 import CcaCard from './CcaCard';
 
-export default function RentalTab({ p, rental, compare, all, scenario, stockScenario, shared, t, fmt }) {
+export default function RentalTab({ p, rental, compare, all, scenario, stockScenario, shared, onApplyCca, t, fmt }) {
   const [showAll, setShowAll] = useState(false);
   const rows = rental.rows;
   const y1 = rows[0];
@@ -146,7 +146,7 @@ export default function RentalTab({ p, rental, compare, all, scenario, stockScen
 
       <TaxPathCard p={p} shared={shared} scenario={scenario} stockScenario={stockScenario} t={t} fmt={fmt} />
 
-      <CcaCard p={p} shared={shared} scenario={scenario} stockScenario={stockScenario} t={t} fmt={fmt} />
+      <CcaCard p={p} shared={shared} scenario={scenario} stockScenario={stockScenario} onApplyCca={onApplyCca} t={t} fmt={fmt} />
 
       <Card className="overflow-hidden">
         <div className="p-5 pb-3 flex items-center justify-between">

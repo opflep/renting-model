@@ -22,7 +22,12 @@ const houseFields = (market, src = DEFAULTS[market]) => {
 // Tax lives in named cases; `activeTaxCase` picks the one every tab uses.
 const taxCasesFrom = (market, src) => {
   const list = Array.isArray(src.taxCases) ? src.taxCases.filter((x) => x && typeof x === 'object') : [];
-  let cases = list.map((x) => ({ id: String(x.id || uid()), name: String(x.name || 'Case').slice(0, 60), tax: normalizeTax(market, x.tax || {}) }));
+  let cases = list.map((x) => ({
+    id: String(x.id || uid()),
+    name: String(x.name || 'Case').slice(0, 60),
+    tax: normalizeTax(market, x.tax || {}),
+    ...(x.source && typeof x.source.sheetId === 'string' ? { source: { sheetId: x.source.sheetId, name: String(x.source.name || x.name) } } : {}),
+  }));
   if (!cases.length) {
     cases = defaultTaxCases(market);
     // Older saves had a single tax object: keep it as the active case.
@@ -167,6 +172,7 @@ export const actions = {
       const taxCases = sh.taxCases.filter((c) => c.id !== id);
       return { ...sh, taxCases, activeTaxCase: sh.activeTaxCase === id ? taxCases[0].id : sh.activeTaxCase };
     }),
+  taxSetCca: (id, ccaSteps) => (s) => mapShared(s, (sh) => ({ ...sh, taxCases: sh.taxCases.map((c) => (c.id === id ? { ...c, tax: { ...c.tax, ccaSteps } } : c)) })),
   taxResetCase: () => (s) => mapShared(s, (sh) => ({ ...sh, taxCases: sh.taxCases.map((c) => (c.id === sh.activeTaxCase ? { ...c, tax: normalizeTax(s.market, {}) } : c)) })),
   select: (id) => (s) => ({ ...s, active: { ...s.active, [s.market]: id } }),
   add: (name, fromInputs) => (s) => {
@@ -178,7 +184,7 @@ export const actions = {
   // matched by (sheet, tab name); the sheet wins over local edits. Fields the
   // sheet leaves out fall back to defaults. Houses whose tab disappeared are
   // kept but unlinked so nothing is silently deleted.
-  applySheet: (sheetId, url, houses, now = Date.now()) => (s) => {
+  applySheet: (sheetId, url, houses, taxCases = [], now = Date.now()) => (s) => {
     const profiles = { ...s.profiles };
     const seen = new Set();
     for (const h of houses) {
@@ -213,14 +219,39 @@ export const actions = {
       const p = profiles[s.market].find((x) => x.source?.sheetId === sheetId && x.source.tab === firstNew.tab);
       if (p) active[s.market] = p.id;
     }
-    return { ...s, profiles, active, sources: { ...s.sources, [sheetId]: { url, market: s.sources[sheetId]?.market || s.market, lastSync: now } } };
+    // Tax cases: matched by (sheet, name) per market; the sheet wins. Cases
+    // whose row disappeared are kept but unlinked.
+    const shared = { ...s.shared };
+    const seenCases = new Set();
+    for (const c of taxCases) {
+      const m = MARKETS.includes(c.market) ? c.market : s.market;
+      seenCases.add(`${m}:${c.name}`);
+      const sh = shared[m];
+      const idx = sh.taxCases.findIndex((x) => x.source?.sheetId === sheetId && x.source.name === c.name);
+      const next = { ...newTaxCase(m, c.name, c.tax), source: { sheetId, name: c.name } };
+      shared[m] = {
+        ...sh,
+        taxCases: idx >= 0 ? sh.taxCases.map((x, i) => (i === idx ? { ...next, id: x.id } : x)) : [...sh.taxCases, next],
+      };
+    }
+    for (const m of MARKETS) {
+      shared[m] = {
+        ...shared[m],
+        taxCases: shared[m].taxCases.map((x) => (x.source?.sheetId === sheetId && !seenCases.has(`${m}:${x.source.name}`) ? { id: x.id, name: x.name, tax: x.tax } : x)),
+      };
+    }
+    return { ...s, profiles, shared, active, sources: { ...s.sources, [sheetId]: { url, market: s.sources[sheetId]?.market || s.market, lastSync: now } } };
   },
   unlinkSheet: (sheetId) => (s) => {
     const profiles = {};
     for (const m of MARKETS) profiles[m] = s.profiles[m].map((x) => (x.source?.sheetId === sheetId ? { id: x.id, name: x.name, inputs: x.inputs } : x));
+    const shared = {};
+    for (const m of MARKETS) {
+      shared[m] = { ...s.shared[m], taxCases: s.shared[m].taxCases.map((x) => (x.source?.sheetId === sheetId ? { id: x.id, name: x.name, tax: x.tax } : x)) };
+    }
     const sources = { ...s.sources };
     delete sources[sheetId];
-    return { ...s, profiles, sources };
+    return { ...s, profiles, shared, sources };
   },
   remove: (id) => (s) => {
     const list = s.profiles[s.market];
