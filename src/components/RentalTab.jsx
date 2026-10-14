@@ -6,6 +6,7 @@ import { INK, SERIES, axisProps } from '../lib/theme';
 import { tr } from '../lib/i18n';
 import { ScenarioTable } from './Scenarios';
 import TaxPathCard from './TaxPathCard';
+import CcaCard from './CcaCard';
 
 export default function RentalTab({ p, rental, compare, all, scenario, stockScenario, t, fmt }) {
   const [showAll, setShowAll] = useState(false);
@@ -143,6 +144,8 @@ export default function RentalTab({ p, rental, compare, all, scenario, stockScen
       <ExitCard p={p} last={last} t={t} fmt={fmt} />
 
       <TaxPathCard p={p} scenario={scenario} stockScenario={stockScenario} t={t} fmt={fmt} />
+
+      <CcaCard p={p} scenario={scenario} stockScenario={stockScenario} t={t} fmt={fmt} />
 
       <Card className="overflow-hidden">
         <div className="p-5 pb-3 flex items-center justify-between">

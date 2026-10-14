@@ -236,3 +236,14 @@ export const analyzeGrid = (p) =>
 export const TAX_PATHS = [0, 5, 10];
 export const analyzeTaxPaths = (p, rentalScenario = 'base', stockScenario = 'base') =>
   Object.fromEntries(TAX_PATHS.map((dropYear) => [dropYear, analyze({ ...p, tax: { ...p.tax, dropYear } }, rentalScenario, stockScenario)]));
+
+// CCA on vs off under each tax path. grid[dropYear][claimCCA ? 'cca' : 'none'].
+export const analyzeCcaPaths = (p, rentalScenario = 'base', stockScenario = 'base') =>
+  Object.fromEntries(
+    TAX_PATHS.map((dropYear) => [
+      dropYear,
+      Object.fromEntries(
+        [false, true].map((claimCCA) => [claimCCA ? 'cca' : 'none', analyze({ ...p, claimCCA, tax: { ...p.tax, dropYear } }, rentalScenario, stockScenario)])
+      ),
+    ])
+  );

@@ -161,9 +161,11 @@ function saleOutcome({ p, value, balance, closingCosts, buildingCost, ucc, isVN,
     capitalGain = value - sellingCosts - acb;
     capitalGainsTax = Math.max(0, capitalGain) * pct(p.tax.cgInclusion) * marginal;
     if (p.claimCCA && buildingCost > 0) {
-      // Recapture (or terminal loss if negative) is fully taxable income.
+      // Recapture is fully taxable income. A terminal loss is ignored: when
+      // land and building are sold together, s.13(21.1) reallocates proceeds
+      // to the building and all but eliminates it.
       const buildingProceeds = Math.min(buildingCost, (value - sellingCosts) * pct(p.buildingPct));
-      recaptureTax = (buildingProceeds - ucc) * marginal;
+      recaptureTax = Math.max(0, buildingProceeds - ucc) * marginal;
     }
   }
   const netSaleProceeds = value - sellingCosts - balance - capitalGainsTax - recaptureTax;

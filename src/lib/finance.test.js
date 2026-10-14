@@ -138,3 +138,19 @@ describe('tax rate path', () => {
     expect(paths[5].rental.rows[5].taxBill).toBeLessThan(paths[0].rental.rows[5].taxBill);
   });
 });
+
+describe('cca paths', () => {
+  it('CCA lowers yearly tax, adds recapture at sale and raises IRR', async () => {
+    const { analyzeCcaPaths } = await import('./store');
+    const g = analyzeCcaPaths({ ...DEFAULTS.CA, rent: 2800 });
+    for (const d of [0, 5, 10]) {
+      const none = g[d].none;
+      const cca = g[d].cca;
+      expect(cca.rental.rows[0].taxBill).toBeLessThan(none.rental.rows[0].taxBill);
+      expect(cca.rental.rows.at(-1).recaptureTax).toBeGreaterThan(0);
+      expect(none.rental.rows.at(-1).recaptureTax).toBe(0);
+      expect(cca.compare.rental.irr).toBeGreaterThan(none.compare.rental.irr);
+    }
+    expect(g[5].cca.rental.rows.at(-1).recaptureTax).toBeLessThan(g[0].cca.rental.rows.at(-1).recaptureTax);
+  });
+});
