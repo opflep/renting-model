@@ -33,12 +33,17 @@ export function monthlyPayment(principal, annualPct, years, compounding = 'month
 // (employment etc.) so it produces a refund when `lossOffset` is on.
 // Vietnam: individuals renting out property pay 5% VAT + 5% PIT on GROSS rent
 // when annual rent exceeds 100M VND. Expenses and interest are not deductible.
-export function rentalIncomeTax({ market, grossRent, netIncome, tax }) {
+// Tax rates can step down from a given year (e.g. lower income later in
+// life). `dropYear` 0 means the rates never change. Year 1 is the first year.
+export const marginalAt = (tax, year) => (tax.dropYear > 0 && year >= tax.dropYear ? tax.laterMarginal : tax.marginal);
+export const dividendAt = (tax, year) => (tax.dropYear > 0 && year >= tax.dropYear ? tax.laterDividend : tax.dividend);
+
+export function rentalIncomeTax({ market, grossRent, netIncome, tax, year = 1 }) {
   if (market === 'VN') {
     return grossRent > tax.vnRentalThreshold ? grossRent * pct(tax.vnRentalRate) : 0;
   }
   if (netIncome < 0 && !tax.lossOffset) return 0;
-  return netIncome * pct(tax.marginal);
+  return netIncome * pct(marginalAt(tax, year));
 }
 
 // ---------------------------------------------------------------------------
@@ -93,14 +98,14 @@ export function projectRental(p) {
       ucc -= cca;
     }
     const taxableIncome = netBeforeCCA - cca;
-    const taxBill = rentalIncomeTax({ market: p.market, grossRent, netIncome: taxableIncome, tax: p.tax });
+    const taxBill = rentalIncomeTax({ market: p.market, grossRent, netIncome: taxableIncome, tax: p.tax, year });
     const cashflow = cashflowPreTax - taxBill;
 
     const startValue = value;
     value *= 1 + pct(p.appreciation);
     const appreciation = value - startValue;
 
-    const sale = saleOutcome({ p, value, balance, closingCosts, buildingCost, ucc, isVN });
+    const sale = saleOutcome({ p, value, balance, closingCosts, buildingCost, ucc, isVN, year });
 
     rows.push({
       year,
@@ -142,7 +147,8 @@ export function projectRental(p) {
 
 // What you'd walk away with if you sold at the end of this year, after
 // selling costs, paying off the loan and settling all taxes due on sale.
-function saleOutcome({ p, value, balance, closingCosts, buildingCost, ucc, isVN }) {
+function saleOutcome({ p, value, balance, closingCosts, buildingCost, ucc, isVN, year }) {
+  const marginal = pct(marginalAt(p.tax, year));
   const sellingCosts = value * pct(p.sellingPct);
   let capitalGainsTax = 0;
   let recaptureTax = 0;
@@ -153,11 +159,11 @@ function saleOutcome({ p, value, balance, closingCosts, buildingCost, ucc, isVN 
   } else {
     const acb = p.price + closingCosts;
     capitalGain = value - sellingCosts - acb;
-    capitalGainsTax = Math.max(0, capitalGain) * pct(p.tax.cgInclusion) * pct(p.tax.marginal);
+    capitalGainsTax = Math.max(0, capitalGain) * pct(p.tax.cgInclusion) * marginal;
     if (p.claimCCA && buildingCost > 0) {
       // Recapture (or terminal loss if negative) is fully taxable income.
       const buildingProceeds = Math.min(buildingCost, (value - sellingCosts) * pct(p.buildingPct));
-      recaptureTax = (buildingProceeds - ucc) * pct(p.tax.marginal);
+      recaptureTax = (buildingProceeds - ucc) * marginal;
     }
   }
   const netSaleProceeds = value - sellingCosts - balance - capitalGainsTax - recaptureTax;
@@ -179,7 +185,6 @@ export const ACCOUNTS = {
 export function projectAccount(kind, contributions, s, tax) {
   const r = pct(s.stockReturn) - pct(s.fee);
   const y = pct(s.dividendYield);
-  const marginal = pct(tax.marginal);
   let V = 0;
   let acb = 0;
   let annualTax = 0;
@@ -187,11 +192,13 @@ export function projectAccount(kind, contributions, s, tax) {
   const gross = [];
 
   for (let t = 0; t < contributions.length; t++) {
+    // Rates for year t (t = 0 is today, taxed at today's rates).
+    const marginal = pct(marginalAt(tax, Math.max(1, t)));
     if (t > 0) {
       if (kind === 'nonreg') {
         // Dividends taxed yearly at the dividend rate; growth deferred until sale.
         const div = V * y;
-        const divTax = div * pct(tax.dividend);
+        const divTax = div * pct(dividendAt(tax, t));
         V = V * (1 + r - y) + div - divTax;
         acb += div - divTax;
         annualTax += divTax;
@@ -212,8 +219,8 @@ export function projectAccount(kind, contributions, s, tax) {
       }
     }
     const c = contributions[t] || 0;
-    // RRSP: the contribution earns a refund at today's marginal rate, which is
-    // also contributed (gross-up), so $1 after-tax buys 1/(1-t) inside the plan.
+    // RRSP: the contribution earns a refund at that year's marginal rate, which
+    // is also contributed (gross-up), so $1 after-tax buys 1/(1-t) inside the plan.
     const added = kind === 'rrsp' ? c / (1 - marginal) : c;
     V += added;
     acb += added;
@@ -292,16 +299,16 @@ export function compareRentalVsStocks(rental, p) {
 export function projectWithRoom(kind, contributions, s, tax) {
   const roomKey = { tfsa: 'tfsaRoom', rrsp: 'rrspRoom' }[kind];
   if (!roomKey) return { ...projectAccount(kind, contributions, s, tax), overflow: 0 };
-  const gross = kind === 'rrsp' ? 1 / (1 - pct(tax.marginal)) : 1;
   let room = Math.max(0, s[roomKey] || 0);
   const sheltered = [];
   const spill = [];
-  for (const c of contributions) {
+  contributions.forEach((c, t) => {
+    const gross = kind === 'rrsp' ? 1 / (1 - pct(marginalAt(tax, Math.max(1, t)))) : 1;
     const fits = Math.min(c, room / gross);
     room -= fits * gross;
     sheltered.push(fits);
     spill.push(c - fits);
-  }
+  });
   const a = projectAccount(kind, sheltered, s, tax);
   const b = projectAccount('nonreg', spill, s, tax);
   return {
@@ -367,7 +374,6 @@ export function irr(flows) {
 
 export function simulateCashDamming(rental, p, d) {
   const rows = rental.rows;
-  const marginal = pct(p.tax.marginal);
   const personalPayment = monthlyPayment(d.homeBalance, d.homeRate, d.homeAmort, 'semiannual');
   const homeR = monthlyRate(d.homeRate, 'semiannual');
   const helocR = monthlyRate(d.helocRate, 'monthly');
@@ -430,7 +436,7 @@ export function simulateCashDamming(rental, p, d) {
     // --- Year-end tax settlement & sweep -----------------------------------
     const baseTax = row.taxBill;
     const damTaxable = row.taxableIncome - helocInterestYear;
-    const damTax = damTaxable < 0 && !p.tax.lossOffset ? 0 : damTaxable * marginal;
+    const damTax = damTaxable < 0 && !p.tax.lossOffset ? 0 : damTaxable * pct(marginalAt(p.tax, year));
     cumulativeTaxSaved += baseTax - damTax;
     base.cash -= baseTax;
     dam.cash -= damTax;

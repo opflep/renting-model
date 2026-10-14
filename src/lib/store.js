@@ -229,3 +229,10 @@ export const analyzeAll = (p, stockScenario = 'base') =>
 // Every rental × stock combination: grid[rental][stocks].
 export const analyzeGrid = (p) =>
   Object.fromEntries(SCENARIOS.map((r) => [r, Object.fromEntries(SCENARIOS.map((s) => [s, analyze(p, r, s)]))]));
+
+// The same house under three tax-rate paths: rates never change, or step
+// down to the "later" rates from year 5 or year 10. Uses the selected
+// scenarios so the card agrees with the rest of the tab.
+export const TAX_PATHS = [0, 5, 10];
+export const analyzeTaxPaths = (p, rentalScenario = 'base', stockScenario = 'base') =>
+  Object.fromEntries(TAX_PATHS.map((dropYear) => [dropYear, analyze({ ...p, tax: { ...p.tax, dropYear } }, rentalScenario, stockScenario)]));

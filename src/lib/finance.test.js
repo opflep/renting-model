@@ -116,3 +116,25 @@ describe('scenarios', () => {
     expect(irr('base')).toBeLessThan(irr('bull'));
   });
 });
+
+describe('tax rate path', () => {
+  it('applies later rates from the drop year and favours the rental', async () => {
+    const { marginalAt } = await import('./finance');
+    const { analyzeTaxPaths } = await import('./store');
+    const tax = { ...DEFAULTS.CA.tax, dropYear: 5, laterMarginal: 35 };
+    expect(marginalAt(tax, 4)).toBe(53.5);
+    expect(marginalAt(tax, 5)).toBe(35);
+    expect(marginalAt({ ...tax, dropYear: 0 }, 20)).toBe(53.5);
+
+    const paths = analyzeTaxPaths(DEFAULTS.CA);
+    const n = DEFAULTS.CA.horizon;
+    // Equal-cash comparison: rental wealth excludes top-ups, so judge by IRR.
+    const irr = (d) => paths[d].compare.rental.irr;
+    expect(irr(5)).toBeGreaterThan(irr(10));
+    expect(irr(10)).toBeGreaterThan(irr(0));
+    expect(paths[5].compare.rental.wealth[n]).toBeGreaterThanOrEqual(paths[0].compare.rental.wealth[n]);
+    // Year-1 numbers are unaffected by a later drop.
+    expect(paths[5].rental.rows[0].taxBill).toBeCloseTo(paths[0].rental.rows[0].taxBill, 6);
+    expect(paths[5].rental.rows[5].taxBill).toBeLessThan(paths[0].rental.rows[5].taxBill);
+  });
+});

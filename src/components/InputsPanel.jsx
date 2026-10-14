@@ -118,6 +118,9 @@ export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash,
             {f('tax.dividend', { ...P, tip: t.dividendTip })}
             {f('tax.cgInclusion', { unit: '%', step: 1 })}
             {f('tax.retirement', { ...P, tip: t.retirementTip })}
+            {f('tax.dropYear', { unit: t.years, step: 1, tip: t.dropYearTip })}
+            {f('tax.laterMarginal', P)}
+            {f('tax.laterDividend', P)}
             <Toggle label={t.lossOffset} checked={p.tax.lossOffset} onChange={(v) => set('tax.lossOffset', v)} />
             <Toggle label={t.claimCCA} checked={p.claimCCA} onChange={(v) => set('claimCCA', v)} />
             {p.claimCCA && f('buildingPct', { unit: '%', step: 5 })}
