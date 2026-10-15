@@ -137,6 +137,7 @@ export default function InputsPanel({ p, set, t, fmt, tab, onReset, initialCash,
               <p className="col-span-2 -mt-2 text-[10px] text-slate-400 leading-snug">{t.claimCCATip}</p>
               {p.claimCCA && f('buildingPct', { unit: '%', step: 5 })}
               {p.claimCCA && f('ccaRate', { unit: '%', step: 0.5 })}
+              {p.claimCCA && f('tax.otherRentalIncome', { ...big, tip: t.otherRentalIncomeTip })}
               <CcaStepsEditor steps={p.tax.ccaSteps} onChange={(v) => set('tax.ccaSteps', v)} t={t} />
             </div>
           </>

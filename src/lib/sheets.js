@@ -173,6 +173,7 @@ const TAX_COLS = {
   steps: ['rate steps', 'rate changes', 'steps', 'thay doi thue suat'],
   ccaSteps: ['cca steps', 'cca', 'cca by year', 'cca theo nam'],
   saleOtherIncome: ['other income in sale year', 'sale year income', 'sale income', 'thu nhap khac nam ban'],
+  otherRentalIncome: ['net rental income from other properties', 'other rental income', 'other rentals', 'thu nhap cho thue khac'],
 };
 const TAX_LOOKUP = new Map();
 for (const [key, aliases] of Object.entries(TAX_COLS)) for (const a of aliases) TAX_LOOKUP.set(normLabel(a), key);
@@ -226,6 +227,8 @@ export function parseTaxRows(rows, fallbackMarket) {
     }
     const income = parseValue('price', get('saleOtherIncome'));
     if (income !== undefined) tax.saleOtherIncome = income;
+    const other = parseValue('price', get('otherRentalIncome'));
+    if (other !== undefined) tax.otherRentalIncome = other;
     const lo = parseValue('claimCCA', get('lossOffset'));
     if (lo !== undefined) tax.lossOffset = lo;
     tax.steps = parseRateSteps(get('steps'));
@@ -266,12 +269,12 @@ export async function parseWorkbook(buffer, fallbackMarket) {
 }
 
 const TAX_TEMPLATE_ROWS = [
-  ['Name', 'Market', 'Marginal %', 'Dividend %', 'CG inclusion %', 'RRSP withdrawal %', 'Loss offset', 'Rate steps', 'CCA steps', 'Other income in sale year'],
-  ['Top bracket throughout', 'CA', 53.5, 36.54, 50, 30, 'Yes', '', '', 0],
-  ['Lower from year 5', 'CA', 53.5, 36.54, 50, 30, 'Yes', '5: 35/18', '', 0],
-  ['Lower from year 10', 'CA', 53.5, 36.54, 50, 30, 'Yes', '10: 35/18', '', 0],
-  ['Semi-retire 2031', 'CA', 53.5, 36.54, 50, 30, 'Yes', '5: 38.5/18; 12: 30/10', '', 130000],
-  ['Semi-retire, CCA from yr 3', 'CA', 53.5, 36.54, 50, 30, 'Yes', '5: 38.5/18; 12: 30/10', '1: no; 3: yes', 130000],
+  ['Name', 'Market', 'Marginal %', 'Dividend %', 'CG inclusion %', 'RRSP withdrawal %', 'Loss offset', 'Rate steps', 'CCA steps', 'Other income in sale year', 'Other rental income'],
+  ['Top bracket throughout', 'CA', 53.5, 36.54, 50, 30, 'Yes', '', '', 0, 0],
+  ['Lower from year 5', 'CA', 53.5, 36.54, 50, 30, 'Yes', '5: 35/18', '', 0, 0],
+  ['Lower from year 10', 'CA', 53.5, 36.54, 50, 30, 'Yes', '10: 35/18', '', 0, 0],
+  ['Semi-retire 2031', 'CA', 53.5, 36.54, 50, 30, 'Yes', '5: 38.5/18; 12: 30/10', '', 130000, 0],
+  ['Semi-retire, CCA from yr 3', 'CA', 53.5, 36.54, 50, 30, 'Yes', '5: 38.5/18; 12: 30/10', '1: no; 3: yes', 130000, 0],
 ];
 
 const TEMPLATE_ROWS = (m) => {
@@ -332,7 +335,7 @@ export function buildTemplate(XLSX, market) {
   });
   if (market === 'CA') {
     const ws = XLSX.utils.aoa_to_sheet(TAX_TEMPLATE_ROWS);
-    ws['!cols'] = [{ wch: 26 }, { wch: 8 }, { wch: 11 }, { wch: 11 }, { wch: 14 }, { wch: 16 }, { wch: 11 }, { wch: 24 }, { wch: 16 }, { wch: 22 }];
+    ws['!cols'] = [{ wch: 26 }, { wch: 8 }, { wch: 11 }, { wch: 11 }, { wch: 14 }, { wch: 16 }, { wch: 11 }, { wch: 24 }, { wch: 16 }, { wch: 22 }, { wch: 18 }];
     XLSX.utils.book_append_sheet(wb, ws, 'Tax cases');
   }
   return wb;

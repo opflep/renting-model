@@ -123,6 +123,7 @@ Add a tab named **Tax cases** to keep your tax cases in the sheet too. One row p
 | Rate steps | Rate changes by year: `from year: marginal/dividend`, separated by `;` | `5: 38.5/18; 12: 30/10` |
 | CCA steps | CCA on/off by year: `from year: yes` or `no` | `1: no; 3: yes` |
 | Other income in sale year | If set, the sale is stacked on this income using BC brackets | `130000` |
+| Other rental income | Yearly net rental income from your other properties; widens the CCA cap | `9000` |
 
 Blank cells use the app defaults. Cases sync like houses: matched by name, the sheet wins, a deleted row leaves an unlinked copy in the app. The tab name must be exactly `Tax cases` (or `Kịch bản thuế`).
 

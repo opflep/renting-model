@@ -94,7 +94,9 @@ export function projectRental(p) {
     let cca = 0;
     if (!isVN && p.claimCCA && ccaClaimAt(p.tax, year)) {
       const maxClaim = ucc * pct(p.ccaRate) * (year === 1 ? 0.5 : 1);
-      cca = Math.max(0, Math.min(maxClaim, netBeforeCCA));
+      // CRA caps CCA at combined net rental income from ALL rental
+      // properties, so income from the others widens the room here.
+      cca = Math.max(0, Math.min(maxClaim, netBeforeCCA + (Number(p.tax.otherRentalIncome) || 0)));
       ucc -= cca;
     }
     const taxableIncome = netBeforeCCA - cca;

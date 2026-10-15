@@ -201,3 +201,14 @@ describe('cca optimizer', () => {
     expect(flat.best.to).toBe(15);
   });
 });
+
+describe('cca cap across properties', () => {
+  it('other rental income widens the CCA cap up to the 4% maximum', () => {
+    const base = { ...DEFAULTS.CA, rent: 2300, price: 415000, claimCCA: true, horizon: 3 };
+    const alone = projectRental(base).rows[1];
+    const pooled = projectRental({ ...base, tax: { ...base.tax, otherRentalIncome: 9000 } }).rows[1];
+    expect(alone.cca).toBeCloseTo(alone.grossRent - alone.operatingExpenses - alone.interest, 6);
+    expect(pooled.cca).toBeGreaterThan(alone.cca);
+    expect(pooled.cca).toBeLessThanOrEqual(alone.cca + 9000 + 1e-6);
+  });
+});
